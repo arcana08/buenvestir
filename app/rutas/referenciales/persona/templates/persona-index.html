@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Personas
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <h3>Listar Personas</h3>
+
+  <!-- tarjeta -->
+  <div class="card">
+    <div class="card-header">
+      <button type="button" class="btn btn-primary" id="btnAgregar">Agregar</button>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped" id="tbl">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Cédula</th>
+            <th>Fecha de Nacimiento</th>
+            <th>Teléfono</th>
+            <th>Barrio</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- /tarjeta -->
+
+  <!-- Formulario Modal -->
+  <div class="modal" id="modalFormulario">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTitle"></h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="hidden" id="txtIdPersona">
+            <label for="txtNombre">Nombre:</label>
+            <input type="text" class="form-control" id="txtNombre" placeholder="Ingrese el nombre">
+          </div>
+          <div class="form-group">
+            <label for="txtApellido">Apellido:</label>
+            <input type="text" class="form-control" id="txtApellido" placeholder="Ingrese el apellido">
+          </div>
+          <div class="form-group">
+            <label for="txtCedula">Cédula:</label>
+            <input type="text" class="form-control" id="txtCedula" placeholder="Ingrese la cédula">
+          </div>
+          <div class="form-group">
+            <label for="txtFechaNacimiento">Fecha de Nacimiento:</label>
+            <input type="date" class="form-control" id="txtFechaNacimiento">
+          </div>
+          <div class="form-group">
+            <label for="txtTelefono">Teléfono:</label>
+            <input type="text" class="form-control" id="txtTelefono" placeholder="Ingrese el teléfono">
+          </div>
+          <div class="form-group">
+            <input type="hidden" id="txtIdBarrio">
+            <label for="txtBarrio">Barrio:</label>
+            <input type="text" class="form-control" id="txtBarrio" placeholder="Click para buscar un barrio" readonly>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para seleccionar barrio -->
+  <div class="modal" id="modalBuscarBarrio">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalBarrioTitle">Seleccionar Barrio</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="tblBarrio">
+              <thead>
+                <tr>
+                  <th>Pais</th>
+                  <th>Departamento</th>
+                  <th>Ciudad</th>
+                  <th>Barrio</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4 d-none" id="rowAlerta">
+    <div class="col col-md-12">
+      <div class="alert alert-success">
+        <strong>Registro Exitoso!</strong>
+        <div class="row" id="mostrarAlerta"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  const initDatatable = () => {
+    $('#tbl').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/personas',
+      columns: [
+        { data: 'per_nombre' },
+        { data: 'per_apellido' },
+        { data: 'per_ci' },
+        { data: 'per_fechanac'},
+        { data: 'per_telefono' },
+        { data: 'bar_nombre' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_editar" class="btn btn-primary" data-idpersona="${row.idpersona}">Editar</button>
+                    <button type="button" name="btn_eliminar" class="btn btn-danger" data-idpersona="${row.idpersona}">Eliminar</button>`
+          }
+        }
+      ]
+    });
+  }
+
+  const initDatatableBarrio = () => {
+    $('#tblBarrio').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/barrios',
+      columns: [
+        { data: 'pai_nombre' },
+        { data: 'dep_nombre' },
+        { data: 'ciu_nombre' },
+        { data: 'bar_nombre' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_seleccionar_barrio" class="btn btn-primary" data-idbarrio="${row.idbarrio}" data-barrio="${row.bar_nombre}">
+                      <i class="fa fa-check"></i> Seleccionar
+                    </button>`;
+          }
+        }
+      ]
+    });
+
+    $('#tblBarrio').on('click', 'button[name="btn_seleccionar_barrio"]', function () {
+      const idBarrio = $(this).data('idbarrio');
+      const barrio = $(this).data('barrio');
+      $('#txtBarrio').val(barrio);
+      $('#txtIdBarrio').val(idBarrio);
+      $('#modalBuscarBarrio').modal('hide');
+    });
+  }
+
+  const agregar = () => {
+    $('#btnAgregar').on('click', function () {
+      $('#modalTitle').text("Agregar Persona");
+      $('#txtIdPersona').val("");
+      $('#txtNombre').val("");
+      $('#txtApellido').val("");
+      $('#txtCedula').val("");
+      $('#txtFechaNacimiento').val("");
+      $('#txtTelefono').val("");
+      $('#txtBarrio').val("");
+      $('#modalFormulario').modal();
+    });
+  }
+
+  const buscarBarrio = () => {
+    $('#txtBarrio').on('click', function () {
+      $('#modalBarrioTitle').text("Seleccionar Barrio");
+      $('#modalBuscarBarrio').modal();
+    });
+  }
+
+  const guardar = () => {
+    $('#btnGuardar').on('click', function () {
+      const idPersona = $('#txtIdPersona').val();
+      const nombre = $('#txtNombre').val();
+      const apellido = $('#txtApellido').val();
+      const cedula = $('#txtCedula').val();
+      const fechaNacimiento = $('#txtFechaNacimiento').val();
+      const telefono = $('#txtTelefono').val();
+      const idBarrio = $('#txtIdBarrio').val();
+      const tabla = $('#tbl').DataTable();
+
+      if (idPersona) {
+        // update
+        fetch(`/api/v1/personas/${idPersona}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nombre, apellido, ci:cedula, fechanac: fechaNacimiento, telefono, barrio: idBarrio })
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Actualizado", "La persona ha sido actualizada correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al actualizar la persona.", "error");
+          });
+      } else {
+        // insert
+        fetch(`/api/v1/personas`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nombre, apellido, ci:cedula, fechanac: fechaNacimiento, telefono, barrio: idBarrio })
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Registrado", "La persona ha sido agregada correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al guardar persona.", "error");
+          });
+      }
+      $('#txtIdPersona').val("");
+      $('#txtNombre').val("");
+      $('#txtApellido').val("");
+      $('#txtCedula').val("");
+      $('#txtFechaNacimiento').val("");
+      $('#txtTelefono').val("");
+      $('#txtIdBarrio').val("");
+      $('#txtBarrio').val("");
+      $('#modalFormulario').modal("hide");
+    });
+  }
+
+  const editar = () => {
+    $('#tbl').on('click', 'button[name="btn_editar"]', function () {
+      // Mostrar mensaje de confirmación usando sweetalert
+      Swal.fire({
+        title: "¿Deseas editar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          //Swal.fire("Saved!", "", "success");
+          $('#modalTitle').text("Editar una Persona");
+
+          const idPersona = $(this).data('idpersona');
+          $('#txtIdPersona').val(idPersona);
+
+          // Necesitamos obtener la descripción del backend
+          fetch(`/api/v1/personas/${idPersona}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              $('#txtIdPersona').val(data.data.idpersona);
+              $('#txtNombre').val(data.data.per_nombre);
+              $('#txtApellido').val(data.data.per_apellido);
+              $('#txtCedula').val(data.data.per_ci);
+              $('#txtFechaNacimiento').val(data.data.per_fechanac);
+              $('#txtTelefono').val(data.data.per_telefono);
+              $('#txtIdBarrio').val(data.data.idbarrio);
+              $('#txtBarrio').val(data.data.bar_nombre);
+              $('#modalFormulario').modal();
+            });
+        }
+      });
+    });
+  }
+
+  const eliminar = () => {
+    $('#tbl').on('click', 'button[name="btn_eliminar"]', function () {
+      const idPersona = $(this).data('idpersona');
+      // Mostrar mensaje de confirmación usando sweetalert
+      Swal.fire({
+        title: "¿Deseas eliminar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/api/v1/personas/${idPersona}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              if (data && !data.error && data.success) {
+                // Para borrar la fila del datatable(cliente)
+                const fila = $(this).closest('tr');
+                const tabla = $('#tbl').DataTable();
+                tabla.row(fila).remove().draw();
+                Swal.fire("Eliminado", "", data.success);
+              } else {
+                Swal.fire(data.error);
+              }
+            }).catch(err => {
+              Swal.fire("Error", "Ocurrió un error al eliminar persona.", "error");
+            });
+        }
+      });
+
+    });
+  }
+
+  const addEvents = () => {
+    agregar();
+    guardar();
+    editar();
+    eliminar();
+    buscarBarrio();
+  }
+
+  $(function () {
+    initDatatable();
+    initDatatableBarrio();
+    addEvents();
+  });
+</script>
+{% endblock %}

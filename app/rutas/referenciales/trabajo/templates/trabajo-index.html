@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Trabajos
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+    <h3>Listar Trabajos</h3>
+
+    <!-- Tarjeta -->
+    <div class="card">
+        <div class="card-header">
+            <button type="button" class="btn btn-primary" id="btnAgregarTrabajo">Agregar Trabajo</button>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped" id="tblTrabajos">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <!-- /Tarjeta -->
+
+    <!-- Modal para formulario -->
+    <div class="modal" id="modalFormularioTrabajo">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <!-- Encabezado del modal -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalTitleTrabajo"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Cuerpo del modal -->
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input type="hidden" id="txtIdTrabajo">
+                        <label for="txtNombreTrabajo">Nombre del Trabajo:</label>
+                        <input type="text" class="form-control" placeholder="Ingrese nombre del trabajo" id="txtNombreTrabajo">
+                    </div>
+                </div>
+
+                <!-- Pie del modal -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="btnGuardarTrabajo">Guardar</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4 d-none" id="rowAlertaTrabajo">
+        <div class="col col-md-12">
+            <div class="alert alert-success">
+                <strong>Registro Exitoso!</strong>
+                <div class="row" id="mostrarAlertaTrabajo"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+
+  const initDatatableTrabajos = () => {
+    $('#tblTrabajos').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax:'/api/v1/trabajos',
+      columns: [
+        { data: 'tra_nombre' },
+        { data: function(row) {
+            return `<button type="button" name="btn_editar_trabajo" class="btn btn-primary" data-idtrabajo="${row.idtrabajo}">Editar</button>
+                    <button type="button" name="btn_eliminar_trabajo" class="btn btn-danger" data-idtrabajo="${row.idtrabajo}">Eliminar</button>`
+          }
+        }
+      ]
+    });
+  }
+
+  const agregarTrabajo = () => {
+    $('#btnAgregarTrabajo').on('click', function(){
+      $('#modalTitleTrabajo').text("Agregar un Trabajo");
+      $('#txtIdTrabajo').val("");
+      $('#txtNombreTrabajo').val("");
+      $('#modalFormularioTrabajo').modal();
+    });
+  }
+
+  const guardarTrabajo = () => {
+    $('#btnGuardarTrabajo').on('click', function() {
+      const idTrabajo = $('#txtIdTrabajo').val();
+      const nuevoNombre = $('#txtNombreTrabajo').val();
+      const tabla = $('#tblTrabajos').DataTable();
+
+      if(idTrabajo) {
+        // update
+        fetch(`/api/v1/trabajos/${idTrabajo}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          }, body: JSON.stringify({ nombre: nuevoNombre })
+        })
+        .then(resp => resp.json())
+        .then(data => {
+          if(data && !data.error && data.success) {
+            tabla.ajax.reload();
+            Swal.fire("Actualizado", "El trabajo ha sido actualizado correctamente.", "success");
+          } else {
+            Swal.fire(data.error);
+          }
+        }).catch(err => {
+          console.error(err);
+          Swal.fire("Error", "Ocurrió un error al actualizar el trabajo.", "error");
+        });
+      } else {
+        // insert
+        fetch(`/api/v1/trabajos`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }, body: JSON.stringify({ nombre: nuevoNombre })
+        })
+        .then(resp => resp.json())
+        .then(data => {
+          if(data && !data.error && data.success) {
+            tabla.ajax.reload();
+            Swal.fire("Agregado", "El trabajo ha sido agregado correctamente.", "success");
+          } else {
+            Swal.fire(data.error);
+          }
+        }).catch(err => {
+          console.error(err);
+          Swal.fire("Error", "Ocurrió un error al guardar el trabajo.", "error");
+        });
+      }
+      $('#txtNombreTrabajo').val("");
+      $('#modalFormularioTrabajo').modal("hide");
+    });
+  }
+
+  const editarTrabajo = () => {
+    $('#tblTrabajos').on('click', 'button[name="btn_editar_trabajo"]',function(){
+      Swal.fire({
+        title: "¿Deseas editar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          $('#modalTitleTrabajo').text("Editar un Trabajo");
+
+          const idTrabajo = $(this).data('idtrabajo');
+          $('#txtIdTrabajo').val(idTrabajo);
+
+          fetch(`/api/v1/trabajos/${idTrabajo}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(resp => resp.json())
+          .then(data => {
+            $('#txtNombreTrabajo').val(data.data.tra_nombre);
+            $('#modalFormularioTrabajo').modal();
+          });
+        }
+      });
+    });
+  }
+
+  const eliminarTrabajo = () => {
+    $('#tblTrabajos').on('click', 'button[name="btn_eliminar_trabajo"]',function(){
+      const idTrabajo = $(this).data('idtrabajo');
+      Swal.fire({
+        title: "¿Deseas eliminar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/api/v1/trabajos/${idTrabajo}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(resp => resp.json())
+          .then(data => {
+            if(data && !data.error && data.success) {
+              const fila =$(this).closest('tr');
+              const tabla = $('#tblTrabajos').DataTable();
+              tabla.row(fila).remove().draw();
+              Swal.fire("Eliminado", "", data.success);
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            Swal.fire("Error", "Ocurrió un error al eliminar el trabajo.", "error");
+          });
+        }
+      });
+    });
+  }
+
+  const addEventsTrabajos = () => {
+    agregarTrabajo();
+    guardarTrabajo();
+    editarTrabajo();
+    eliminarTrabajo();
+  }
+
+  $(function() {
+    initDatatableTrabajos();
+    addEventsTrabajos();
+  });
+</script>
+{% endblock %}

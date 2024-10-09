@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Etapas de Producción
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+    <h3>Listar Etapas de Producción</h3>
+
+    <!-- Tarjeta -->
+    <div class="card">
+        <div class="card-header">
+            <button type="button" class="btn btn-primary" id="btnAgregarEtapa">Agregar Etapa</button>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped" id="tblEtapas">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <!-- /Tarjeta -->
+
+    <!-- Modal para formulario -->
+    <div class="modal" id="modalFormularioEtapa">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <!-- Encabezado del modal -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalTitleEtapa"></h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Cuerpo del modal -->
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input type="hidden" id="txtIdEtapa">
+                        <label for="txtNombreEtapa">Nombre de la Etapa:</label>
+                        <input type="text" class="form-control" placeholder="Ingrese nombre de la etapa" id="txtNombreEtapa">
+                    </div>
+                </div>
+
+                <!-- Pie del modal -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="btnGuardarEtapa">Guardar</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4 d-none" id="rowAlertaEtapa">
+        <div class="col col-md-12">
+            <div class="alert alert-success">
+                <strong>Registro Exitoso!</strong>
+                <div class="row" id="mostrarAlertaEtapa"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+
+  const initDatatableEtapas = () => {
+    $('#tblEtapas').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax:'/api/v1/etapas',
+      columns: [
+        { data: 'eta_nombre' },
+        { data: function(row) {
+            return `<button type="button" name="btn_editar_etapa" class="btn btn-primary" data-idetapa="${row.idetapa_produccion}">Editar</button>
+                    <button type="button" name="btn_eliminar_etapa" class="btn btn-danger" data-idetapa="${row.idetapa_produccion}">Eliminar</button>`
+          }
+        }
+      ]
+    });
+  }
+
+  const agregarEtapa = () => {
+    $('#btnAgregarEtapa').on('click', function(){
+      $('#modalTitleEtapa').text("Agregar una Etapa");
+      $('#txtIdEtapa').val("");
+      $('#txtNombreEtapa').val("");
+      $('#modalFormularioEtapa').modal();
+    });
+  }
+
+  const guardarEtapa = () => {
+    $('#btnGuardarEtapa').on('click', function() {
+      const idEtapa = $('#txtIdEtapa').val();
+      const nuevoNombre = $('#txtNombreEtapa').val();
+      const tabla = $('#tblEtapas').DataTable();
+
+      if(idEtapa) {
+        // update
+        fetch(`/api/v1/etapas/${idEtapa}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          }, body: JSON.stringify({ nombre: nuevoNombre })
+        })
+        .then(resp => resp.json())
+        .then(data => {
+          if(data && !data.error && data.success) {
+            tabla.ajax.reload();
+            Swal.fire("Actualizado", "La etapa ha sido actualizada correctamente.", "success");
+          } else {
+            Swal.fire(data.error);
+          }
+        }).catch(err => {
+          console.error(err);
+          Swal.fire("Error", "Ocurrió un error al actualizar la etapa.", "error");
+        });
+      } else {
+        // insert
+        fetch(`/api/v1/etapas`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }, body: JSON.stringify({ nombre: nuevoNombre })
+        })
+        .then(resp => resp.json())
+        .then(data => {
+          if(data && !data.error && data.success) {
+            tabla.ajax.reload();
+            Swal.fire("Agregado", "La etapa ha sido agregada correctamente.", "success");
+          } else {
+            Swal.fire(data.error);
+          }
+        }).catch(err => {
+          console.error(err);
+          Swal.fire("Error", "Ocurrió un error al guardar la etapa.", "error");
+        });
+      }
+      $('#txtNombreEtapa').val("");
+      $('#modalFormularioEtapa').modal("hide");
+    });
+  }
+
+  const editarEtapa = () => {
+    $('#tblEtapas').on('click', 'button[name="btn_editar_etapa"]',function(){
+      Swal.fire({
+        title: "¿Deseas editar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          $('#modalTitleEtapa').text("Editar una Etapa");
+
+          const idEtapa = $(this).data('idetapa');
+          $('#txtIdEtapa').val(idEtapa);
+
+          fetch(`/api/v1/etapas/${idEtapa}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(resp => resp.json())
+          .then(data => {
+            $('#txtNombreEtapa').val(data.data.eta_nombre);
+            $('#modalFormularioEtapa').modal();
+          });
+        }
+      });
+    });
+  }
+
+  const eliminarEtapa = () => {
+    $('#tblEtapas').on('click', 'button[name="btn_eliminar_etapa"]',function(){
+      const idEtapa = $(this).data('idetapa');
+      Swal.fire({
+        title: "¿Deseas eliminar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/api/v1/etapas/${idEtapa}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(resp => resp.json())
+          .then(data => {
+            if(data && !data.error && data.success) {
+              const fila =$(this).closest('tr');
+              const tabla = $('#tblEtapas').DataTable();
+              tabla.row(fila).remove().draw();
+              Swal.fire("Eliminado", "", data.success);
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            Swal.fire("Error", "Ocurrió un error al eliminar la etapa.", "error");
+          });
+        }
+      });
+    });
+  }
+
+  const addEventsEtapas = () => {
+    agregarEtapa();
+    guardarEtapa();
+    editarEtapa();
+    eliminarEtapa();
+  }
+
+  $(function() {
+    initDatatableEtapas();
+    addEventsEtapas();
+  });
+</script>
+{% endblock %}

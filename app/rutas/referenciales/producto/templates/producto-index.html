@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Productos
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <h3>Listar Productos</h3>
+
+  <!-- tarjeta -->
+  <div class="card">
+    <div class="card-header">
+      <button type="button" class="btn btn-primary" id="btnAgregar">Agregar</button>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped" id="tbl">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Color</th>
+            <th>Categoria</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- /tarjeta -->
+
+  <!-- Formulario Modal -->
+  <div class="modal" id="modalFormulario">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTitle"></h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="hidden" id="txtIdProducto">
+            <label for="txtNombre">Nombre:</label>
+            <input type="text" class="form-control" id="txtNombre" placeholder="Ingrese el nombre">
+          </div>
+          <div class="form-group">
+            <label for="txtColor">Color:</label>
+            <input type="text" class="form-control" id="txtColor" placeholder="Ingrese el color">
+          </div>
+          <div class="form-group">
+            <input type="hidden" id="txtIdCategoria">
+            <label for="txtCategoria">Categoria:</label>
+            <input type="text" class="form-control" id="txtCategoria" placeholder="Click para buscar un categoria" readonly>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para seleccionar categoria -->
+  <div class="modal" id="modalBuscarCategoria">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalCategoriaTitle">Seleccionar Categoria</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="tblCategoria">
+              <thead>
+                <tr>
+                  <th>Categoria</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4 d-none" id="rowAlerta">
+    <div class="col col-md-12">
+      <div class="alert alert-success">
+        <strong>Registro Exitoso!</strong>
+        <div class="row" id="mostrarAlerta"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  const initDatatable = () => {
+    $('#tbl').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/productos',
+      columns: [
+        { data: 'pro_nombre' },
+        { data: 'pro_color' },
+        { data: 'cat_nombre' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_editar" class="btn btn-primary" data-idproducto="${row.idproducto}">Editar</button>
+                    <button type="button" name="btn_eliminar" class="btn btn-danger" data-idproducto="${row.idproducto}">Eliminar</button>`
+          }
+        }
+      ]
+    });
+  }
+
+  const initDatatableCategoria = () => {
+    $('#tblCategoria').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/categorias',
+      columns: [
+        { data: 'cat_nombre' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_seleccionar_categoria" class="btn btn-primary" data-idcategoria="${row.idcategoria}" data-categoria="${row.cat_nombre}">
+                      <i class="fa fa-check"></i> Seleccionar
+                    </button>`;
+          }
+        }
+      ]
+    });
+
+    $('#tblCategoria').on('click', 'button[name="btn_seleccionar_categoria"]', function () {
+      const idCategoria = $(this).data('idcategoria');
+      const categoria = $(this).data('categoria');
+      $('#txtCategoria').val(categoria);
+      $('#txtIdCategoria').val(idCategoria);
+      $('#modalBuscarCategoria').modal('hide');
+    });
+  }
+
+  const agregar = () => {
+    $('#btnAgregar').on('click', function () {
+      $('#modalTitle').text("Agregar Producto");
+      $('#txtIdProducto').val("");
+      $('#txtNombre').val("");
+      $('#txtColor').val("");
+      $('#txtIdCategoria').val("");
+      $('#txtCategoria').val("");
+      $('#modalFormulario').modal();
+    });
+  }
+
+  const buscarCategoria = () => {
+    $('#txtCategoria').on('click', function () {
+      $('#modalCategoriaTitle').text("Seleccionar Categoria");
+      $('#modalBuscarCategoria').modal();
+    });
+  }
+
+  const guardar = () => {
+    $('#btnGuardar').on('click', function () {
+      const idProducto = $('#txtIdProducto').val();
+      const nombre = $('#txtNombre').val();
+      const color = $('#txtColor').val();
+      const idCategoria = $('#txtIdCategoria').val();
+      const tabla = $('#tbl').DataTable();
+
+      if (idProducto) {
+        // update
+        fetch(`/api/v1/productos/${idProducto}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nombre, color, categoria: idCategoria })
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Actualizado", "La producto ha sido actualizada correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al actualizar el producto.", "error");
+          });
+      } else {
+        // insert
+        fetch(`/api/v1/productos`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nombre, color, categoria: idCategoria })
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Registrado", "La producto ha sido agregada correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al guardar producto.", "error");
+          });
+      }
+      $('#txtIdProducto').val("");
+      $('#txtNombre').val("");
+      $('#txtColor').val("");
+      $('#txtIdCategoria').val("");
+      $('#txtCategoria').val("");
+      $('#modalFormulario').modal("hide");
+    });
+  }
+
+  const editar = () => {
+    $('#tbl').on('click', 'button[name="btn_editar"]', function () {
+      // Mostrar mensaje de confirmación usando sweetalert
+      Swal.fire({
+        title: "¿Deseas editar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          //Swal.fire("Saved!", "", "success");
+          $('#modalTitle').text("Editar un Producto");
+
+          const idProducto = $(this).data('idproducto');
+          $('#txtIdProducto').val(idProducto);
+
+          // Necesitamos obtener la descripción del backend
+          fetch(`/api/v1/productos/${idProducto}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              $('#txtIdProducto').val(data.data.idproducto);
+              $('#txtNombre').val(data.data.pro_nombre);
+              $('#txtColor').val(data.data.pro_color);
+              $('#txtIdCategoria').val(data.data.idcategoria);
+              $('#txtCategoria').val(data.data.cat_nombre);
+              $('#modalFormulario').modal();
+            });
+        }
+      });
+    });
+  }
+
+  const eliminar = () => {
+    $('#tbl').on('click', 'button[name="btn_eliminar"]', function () {
+      const idProducto = $(this).data('idproducto');
+      // Mostrar mensaje de confirmación usando sweetalert
+      Swal.fire({
+        title: "¿Deseas eliminar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/api/v1/productos/${idProducto}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              if (data && !data.error && data.success) {
+                // Para borrar la fila del datatable(cliente)
+                const fila = $(this).closest('tr');
+                const tabla = $('#tbl').DataTable();
+                tabla.row(fila).remove().draw();
+                Swal.fire("Eliminado", "", data.success);
+              } else {
+                Swal.fire(data.error);
+              }
+            }).catch(err => {
+              Swal.fire("Error", "Ocurrió un error al eliminar producto.", "error");
+            });
+        }
+      });
+
+    });
+  }
+
+  const addEvents = () => {
+    agregar();
+    guardar();
+    editar();
+    eliminar();
+    buscarCategoria();
+  }
+
+  $(function () {
+    initDatatable();
+    initDatatableCategoria();
+    addEvents();
+  });
+</script>
+{% endblock %}

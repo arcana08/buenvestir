@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Clientes
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <h3>Listar Clientes</h3>
+
+  <!-- tarjeta -->
+  <div class="card">
+    <div class="card-header">
+      <button type="button" class="btn btn-primary" id="btnAgregar">Agregar</button>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped" id="tbl">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- /tarjeta -->
+
+  <!-- Formulario Modal -->
+  <div class="modal" id="modalFormulario">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTitle"></h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="hidden" id="txtIdCliente">
+            
+          </div>
+          <div class="form-group">
+            <label for="txtPersona">Persona:</label>
+            <input type="hidden" id="txtIdPersona">
+            <input type="text" class="form-control" id="txtPersona" placeholder="Click para asignar una persona" readonly>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- Modal para seleccionar Persona -->
+  <div class="modal" id="modalBuscarPersona">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalPersonaTitle">Seleccionar Persona</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="tblPersona">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Apellido</th>
+                  <th>CI</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <div class="row mt-4 d-none" id="rowAlerta">
+    <div class="col col-md-12">
+      <div class="alert alert-success">
+        <strong>Registro Exitoso!</strong>
+        <div class="row" id="mostrarAlerta"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  const initDatatable = () => {
+    $('#tbl').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/clientes',
+      columns: [
+        { data: 'per_nombre' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_editar" class="btn btn-primary" data-idcliente="${row.idcliente}">Editar</button>
+                    <button type="button" name="btn_eliminar" class="btn btn-danger" data-idcliente="${row.idcliente}">Eliminar</button>`;
+          }
+        }
+      ]
+    });
+  }
+
+  const initDatatablePersona = () => {
+    $('#tblPersona').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/personas',
+      columns: [
+        { data: 'per_nombre' },
+        { data: 'per_apellido' },
+        { data: 'per_ci' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_seleccionar_persona" class="btn btn-primary" data-idpersona="${row.idpersona}" data-persona="${row.per_nombre}">
+                      <i class="fa fa-check"></i> Seleccionar
+                    </button>`;
+          }
+        }
+      ]
+    });
+
+    $('#tblPersona').on('click', 'button[name="btn_seleccionar_persona"]', function () {
+      const idPersona = $(this).data('idpersona');
+      const persona = $(this).data('persona');
+      $('#txtPersona').val(persona);
+      $('#txtIdPersona').val(idPersona);
+      $('#modalBuscarPersona').modal('hide');
+    });
+  }
+
+  const agregar = () => {
+    $('#btnAgregar').on('click', function () {
+      $('#modalTitle').text("Agregar Cliente");
+      $('#txtIdCliente').val("");
+      $('#txtPersona').val("");
+      $('#txtIdPersona').val("");
+      $('#modalFormulario').modal();
+    });
+  }
+
+  const buscarPersona = () => {
+    $('#txtPersona').on('click', function () {
+      $('#modalPersonaTitle').text("Seleccionar Persona");
+      $('#modalBuscarPersona').modal();
+    });
+  }
+
+  const guardar = () => {
+    $('#btnGuardar').on('click', function () {
+      const idCliente = $('#txtIdCliente').val();
+
+      const persona = $('#txtIdPersona').val();
+      const estado = $('#selEstado').val();
+      const tabla = $('#tbl').DataTable();
+
+      if (idCliente) {
+        // update
+        fetch(`/api/v1/clientes/${idCliente}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ idpersona:persona})
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Actualizado", "El cliente ha sido actualizado correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al actualizar el cliente.", "error");
+          });
+      } else {
+        // insert
+        fetch(`/api/v1/clientes`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ idpersona:persona,})
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Registrado", "El cliente ha sido agregado correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al guardar el cliente.", "error");
+          });
+      }
+      $('#txtIdCliente').val("");
+      $('#modalFormulario').modal("hide");
+    });
+  }
+
+  const editar = () => {
+    $('#tbl').on('click', 'button[name="btn_editar"]', function () {
+      Swal.fire({
+        title: "¿Deseas editar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          $('#modalTitle').text("Editar Cliente");
+
+          const idCliente = $(this).data('idcliente');
+          $('#txtIdCliente').val(idCliente);
+
+          fetch(`/api/v1/clientes/${idCliente}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              $('#txtIdCliente').val(data.data.idcliente);
+             
+              $('#txtPersona').val(data.data.per_nombre);
+              
+              $('#modalFormulario').modal();
+            });
+        }
+      });
+    });
+  }
+
+  const eliminar = () => {
+    $('#tbl').on('click', 'button[name="btn_eliminar"]', function () {
+      const idCliente = $(this).data('idcliente');
+      Swal.fire({
+        title: "¿Deseas eliminar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/api/v1/clientes/${idCliente}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              if (data && !data.error && data.success) {
+                $('#tbl').DataTable().ajax.reload();
+                Swal.fire("Eliminado", "El cliente ha sido eliminado correctamente.", "success");
+              } else {
+                Swal.fire(data.error);
+              }
+            }).catch(err => {
+              console.error(err);
+              Swal.fire("Error", "Ocurrió un error al eliminar el cliente.", "error");
+            });
+        }
+      });
+    });
+  }
+
+  const addEvents = () => {
+    agregar();
+    guardar();
+    editar();
+    eliminar();
+    buscarPersona();
+  }
+
+  $(function () {
+    initDatatable();
+    initDatatablePersona();
+    addEvents();
+  });
+</script>
+{% endblock %}

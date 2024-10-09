@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Materia_primas
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <h3>Listar Materia_primas</h3>
+
+  <!-- tarjeta -->
+  <div class="card">
+    <div class="card-header">
+      <button type="button" class="btn btn-primary" id="btnAgregar">Agregar</button>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped" id="tbl">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Color</th>
+            <th>Unidad de medida</th>
+            <th>Cantidad</th>
+            <th>Categoria</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- /tarjeta -->
+
+  <!-- Formulario Modal -->
+  <div class="modal" id="modalFormulario">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTitle"></h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="hidden" id="txtIdMateria_prima">
+            <label for="txtNombre">Nombre:</label>
+            <input type="text" class="form-control" id="txtNombre" placeholder="Ingrese el nombre">
+          </div>
+          <div class="form-group">
+            <label for="txtColor">Color:</label>
+            <input type="text" class="form-control" id="txtColor" placeholder="Ingrese el color">
+          </div>
+          <div class="form-group">
+            <label for="txtUmedida">Unidad de medida:</label>
+            <input type="text" class="form-control" id="txtUmedida" placeholder="Ingrese la unidad de medida">
+          </div>
+          <div class="form-group">
+            <label for="txtCantidad">Cantidad</label>
+            <input type="text" class="form-control" id="txtCantidad" placeholder="Ingrese la cantidad">
+          </div>
+        
+          <div class="form-group">
+            <input type="hidden" id="txtIdCategoria">
+            <label for="txtCategoria">Categoria:</label>
+            <input type="text" class="form-control" id="txtCategoria" placeholder="Click para buscar un categoria" readonly>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para seleccionar categoria -->
+  <div class="modal" id="modalBuscarCategoria">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalCategoriaTitle">Seleccionar Categoria</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="tblCategoria">
+              <thead>
+                <tr>
+                  <th>Pais</th>
+                  <th>Departamento</th>
+                  <th>Ciudad</th>
+                  <th>Categoria</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4 d-none" id="rowAlerta">
+    <div class="col col-md-12">
+      <div class="alert alert-success">
+        <strong>Registro Exitoso!</strong>
+        <div class="row" id="mostrarAlerta"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  const initDatatable = () => {
+    $('#tbl').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/materia_primas',
+      columns: [
+        { data: 'mat_nombre' },
+        { data: 'mat_color' },
+        { data: 'mat_unidad_medida' },
+        { data: 'mat_cantidad'},
+        { data: 'cat_nombre' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_editar" class="btn btn-primary" data-idmateria_prima="${row.idmateria_prima}">Editar</button>
+                    <button type="button" name="btn_eliminar" class="btn btn-danger" data-idmateria_prima="${row.idmateria_prima}">Eliminar</button>`
+          }
+        }
+      ]
+    });
+  }
+
+  const initDatatableCategoria = () => {
+    $('#tblCategoria').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/categorias',
+      columns: [
+        { data: 'cat_nombre' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_seleccionar_categoria" class="btn btn-primary" data-idcategoria="${row.idcategoria}" data-categoria="${row.cat_nombre}">
+                      <i class="fa fa-check"></i> Seleccionar
+                    </button>`;
+          }
+        }
+      ]
+    });
+
+    $('#tblCategoria').on('click', 'button[name="btn_seleccionar_categoria"]', function () {
+      const idCategoria = $(this).data('idcategoria');
+      const categoria = $(this).data('categoria');
+      $('#txtCategoria').val(categoria);
+      $('#txtIdCategoria').val(idCategoria);
+      $('#modalBuscarCategoria').modal('hide');
+    });
+  }
+
+  const agregar = () => {
+    $('#btnAgregar').on('click', function () {
+      $('#modalTitle').text("Agregar Materia_prima");
+      $('#txtIdMateria_prima').val("");
+      $('#txtNombre').val("");
+      $('#txtColor').val("");
+      $('#txtUmedida').val("");
+      $('#txtCantidad').val("");
+      $('#txtIdCategoria').val("");
+      $('#txtCategoria').val("");
+      $('#modalFormulario').modal();
+    });
+  }
+
+  const buscarCategoria = () => {
+    $('#txtCategoria').on('click', function () {
+      $('#modalCategoriaTitle').text("Seleccionar Categoria");
+      $('#modalBuscarCategoria').modal();
+    });
+  }
+
+  const guardar = () => {
+    $('#btnGuardar').on('click', function () {
+      const idMateria_prima = $('#txtIdMateria_prima').val();
+      const nombre = $('#txtNombre').val();
+      const color = $('#txtColor').val();
+      const umedida = $('#txtUmedida').val();
+      const cantidad = $('#txtCantidad').val();
+      const idCategoria = $('#txtIdCategoria').val();
+      const tabla = $('#tbl').DataTable();
+
+      if (idMateria_prima) {
+        // update
+        fetch(`/api/v1/materia_primas/${idMateria_prima}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nombre, color, umedida,  cantidad,  categoria: idCategoria })
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Actualizado", "La materia_prima ha sido actualizada correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al actualizar la materia_prima.", "error");
+          });
+      } else {
+        // insert
+        fetch(`/api/v1/materia_primas`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ nombre, color, umedida,  cantidad,  categoria: idCategoria })
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Registrado", "La materia_prima ha sido agregada correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al guardar materia_prima.", "error");
+          });
+      }
+      $('#txtIdMateria_prima').val("");
+      $('#txtNombre').val("");
+      $('#txtColor').val("");
+      $('#txtUmedida').val("");
+      $('#txtCantidad').val("");
+      $('#txtIdCategoria').val("");
+      $('#txtCategoria').val("");
+      $('#modalFormulario').modal("hide");
+    });
+  }
+
+  const editar = () => {
+    $('#tbl').on('click', 'button[name="btn_editar"]', function () {
+      // Mostrar mensaje de confirmación usando sweetalert
+      Swal.fire({
+        title: "¿Deseas editar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          //Swal.fire("Saved!", "", "success");
+          $('#modalTitle').text("Editar una Materia_prima");
+
+          const idMateria_prima = $(this).data('idmateria_prima');
+          $('#txtIdMateria_prima').val(idMateria_prima);
+
+          // Necesitamos obtener la descripción del backend
+          fetch(`/api/v1/materia_primas/${idMateria_prima}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              $('#txtIdMateria_prima').val(data.data.idmateria_prima);
+              $('#txtNombre').val(data.data.mat_nombre);
+              $('#txtColor').val(data.data.mat_color);
+              $('#txtUmedida').val(data.data.mat_unidad_medida);
+              $('#txtCantidad').val(data.data.mat_cantidad);
+              $('#txtIdCategoria').val(data.data.idcategoria);
+              $('#txtCategoria').val(data.data.cat_nombre);
+              $('#modalFormulario').modal();
+            });
+        }
+      });
+    });
+  }
+
+  const eliminar = () => {
+    $('#tbl').on('click', 'button[name="btn_eliminar"]', function () {
+      const idMateria_prima = $(this).data('idmateria_prima');
+      // Mostrar mensaje de confirmación usando sweetalert
+      Swal.fire({
+        title: "¿Deseas eliminar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/api/v1/materia_primas/${idMateria_prima}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              if (data && !data.error && data.success) {
+                // Para borrar la fila del datatable(cliente)
+                const fila = $(this).closest('tr');
+                const tabla = $('#tbl').DataTable();
+                tabla.row(fila).remove().draw();
+                Swal.fire("Eliminado", "", data.success);
+              } else {
+                Swal.fire(data.error);
+              }
+            }).catch(err => {
+              Swal.fire("Error", "Ocurrió un error al eliminar materia_prima.", "error");
+            });
+        }
+      });
+
+    });
+  }
+
+  const addEvents = () => {
+    agregar();
+    guardar();
+    editar();
+    eliminar();
+    buscarCategoria();
+  }
+
+  $(function () {
+    initDatatable();
+    initDatatableCategoria();
+    addEvents();
+  });
+</script>
+{% endblock %}

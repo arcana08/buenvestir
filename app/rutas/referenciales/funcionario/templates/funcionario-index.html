@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Funcionarios
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <h3>Listar Funcionarios</h3>
+
+  <!-- tarjeta -->
+  <div class="card">
+    <div class="card-header">
+      <button type="button" class="btn btn-primary" id="btnAgregar">Agregar</button>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped" id="tbl">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Trabajo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- /tarjeta -->
+
+  <!-- Formulario Modal -->
+  <div class="modal" id="modalFormulario">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTitle"></h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="hidden" id="txtIdFuncionario">
+            
+          </div>
+          <div class="form-group">
+            <label for="txtPersona">Persona:</label>
+            <input type="hidden" id="txtIdPersona">
+            <input type="text" class="form-control" id="txtPersona" placeholder="Click para asignar una persona" readonly>
+          </div>
+          <div class="form-group">
+            <label for="txtTrabajo">Trabajo:</label>
+            <input type="hidden" id="txtIdTrabajo">
+            <input type="text" class="form-control" id="txtTrabajo" placeholder="Click para asignar uu Trabajo" readonly>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- Modal para seleccionar Persona -->
+  <div class="modal" id="modalBuscarPersona">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalPersonaTitle">Seleccionar Persona</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="tblPersona">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Apellido</th>
+                  <th>CI</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalBuscarTrabajo">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTrabajoTitle">Seleccionar Trabajo</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="tblTrabajo">
+              <thead>
+                <tr>
+                  <th>Trabajo</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4 d-none" id="rowAlerta">
+    <div class="col col-md-12">
+      <div class="alert alert-success">
+        <strong>Registro Exitoso!</strong>
+        <div class="row" id="mostrarAlerta"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  const initDatatable = () => {
+    $('#tbl').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/funcionarios',
+      columns: [
+        { data: 'per_nombre' },
+        { data: 'tra_nombre' },  
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_editar" class="btn btn-primary" data-idfuncionario="${row.idfuncionario}">Editar</button>
+                    <button type="button" name="btn_eliminar" class="btn btn-danger" data-idfuncionario="${row.idfuncionario}">Eliminar</button>`;
+          }
+        }
+      ]
+    });
+  }
+
+  const initDatatablePersona = () => {
+    $('#tblPersona').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/personas',
+      columns: [
+        { data: 'per_nombre' },
+        { data: 'per_apellido' },
+        { data: 'per_ci' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_seleccionar_persona" class="btn btn-primary" data-idpersona="${row.idpersona}" data-persona="${row.per_nombre}">
+                      <i class="fa fa-check"></i> Seleccionar
+                    </button>`;
+          }
+        }
+      ]
+    });
+
+    $('#tblPersona').on('click', 'button[name="btn_seleccionar_persona"]', function () {
+      const idPersona = $(this).data('idpersona');
+      const persona = $(this).data('persona');
+      $('#txtPersona').val(persona);
+      $('#txtIdPersona').val(idPersona);
+      $('#modalBuscarPersona').modal('hide');
+    });
+  }
+
+  const initDatatableTrabajo = () => {
+    $('#tblTrabajo').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/trabajos',
+      columns: [
+        { data: 'tra_nombre' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_seleccionar_trabajo" class="btn btn-primary" data-idtrabajo="${row.idtrabajo}" data-trabajo="${row.tra_nombre}">
+                      <i class="fa fa-check"></i> Seleccionar
+                    </button>`;
+          }
+        }
+      ]
+    });
+
+    $('#tblTrabajo').on('click', 'button[name="btn_seleccionar_trabajo"]', function () {
+      const idTrabajo = $(this).data('idtrabajo');
+      const trabajo = $(this).data('trabajo');
+      $('#txtTrabajo').val(trabajo);
+      $('#txtIdTrabajo').val(idTrabajo);
+      $('#modalBuscarTrabajo').modal('hide');
+    });
+  }
+
+  const agregar = () => {
+    $('#btnAgregar').on('click', function () {
+      $('#modalTitle').text("Agregar Funcionario");
+      $('#txtIdFuncionario').val("");
+      $('#txtPersona').val("");
+      $('#txtIdPersona').val("");
+      $('#txtTrabajo').val("");
+      $('#txtIdTrabajo').val("");
+      $('#modalFormulario').modal();
+    });
+  }
+
+  const buscarPersona = () => {
+    $('#txtPersona').on('click', function () {
+      $('#modalPersonaTitle').text("Seleccionar Persona");
+      $('#modalBuscarPersona').modal();
+    });
+  }
+  const buscarTrabajo = () => {
+    $('#txtTrabajo').on('click', function () {
+      $('#modalTrabajoTitle').text("Seleccionar Trabajo");
+      $('#modalBuscarTrabajo').modal();
+    });
+  }
+
+  const guardar = () => {
+    $('#btnGuardar').on('click', function () {
+      const idFuncionario = $('#txtIdFuncionario').val();
+
+      const persona = $('#txtIdPersona').val();
+      const trabajo = $('#txtIdTrabajo').val();
+      const estado = $('#selEstado').val();
+      const tabla = $('#tbl').DataTable();
+
+      if (idFuncionario) {
+        // update
+        fetch(`/api/v1/funcionarios/${idFuncionario}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ idtrabajo:trabajo})
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Actualizado", "El funcionario ha sido actualizado correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al actualizar el funcionario.", "error");
+          });
+      } else {
+        // insert
+        fetch(`/api/v1/funcionarios`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ idpersona:persona, idtrabajo:trabajo})
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Registrado", "El funcionario ha sido agregado correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al guardar el funcionario.", "error");
+          });
+      }
+      $('#txtIdFuncionario').val("");
+      $('#txtNombre').val("");
+      $('#txtClave').val("");
+      $('#selTrabajo').val("");
+      $('#selEstado').val("1");
+      $('#modalFormulario').modal("hide");
+    });
+  }
+
+  const editar = () => {
+    $('#tbl').on('click', 'button[name="btn_editar"]', function () {
+      Swal.fire({
+        title: "¿Deseas editar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          $('#modalTitle').text("Editar Funcionario");
+
+          const idFuncionario = $(this).data('idfuncionario');
+          $('#txtIdFuncionario').val(idFuncionario);
+
+          fetch(`/api/v1/funcionarios/${idFuncionario}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              $('#txtIdFuncionario').val(data.data.idfuncionario);
+             
+              $('#txtPersona').val(data.data.per_nombre+" (No es posible cambiar)");
+              $('#txtIdTrabajo').val(data.data.idtrabajo);
+              $('#txtTrabajo').val(data.data.tra_nombre);
+              
+              $('#modalFormulario').modal();
+            });
+        }
+      });
+    });
+  }
+
+  const eliminar = () => {
+    $('#tbl').on('click', 'button[name="btn_eliminar"]', function () {
+      const idFuncionario = $(this).data('idfuncionario');
+      Swal.fire({
+        title: "¿Deseas eliminar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/api/v1/funcionarios/${idFuncionario}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              if (data && !data.error && data.success) {
+                $('#tbl').DataTable().ajax.reload();
+                Swal.fire("Eliminado", "El funcionario ha sido eliminado correctamente.", "success");
+              } else {
+                Swal.fire(data.error);
+              }
+            }).catch(err => {
+              console.error(err);
+              Swal.fire("Error", "Ocurrió un error al eliminar el funcionario.", "error");
+            });
+        }
+      });
+    });
+  }
+
+  const addEvents = () => {
+    agregar();
+    guardar();
+    editar();
+    eliminar();
+    buscarPersona();
+    buscarTrabajo();
+  }
+
+  $(function () {
+    initDatatable();
+    initDatatablePersona();
+    initDatatableTrabajo();
+    addEvents();
+  });
+</script>
+{% endblock %}

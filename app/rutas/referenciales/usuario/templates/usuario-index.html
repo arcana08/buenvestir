@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Usuarios
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <h3>Listar Usuarios</h3>
+
+  <!-- tarjeta -->
+  <div class="card">
+    <div class="card-header">
+      <button type="button" class="btn btn-primary" id="btnAgregar">Agregar</button>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped" id="tbl">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- /tarjeta -->
+
+  <!-- Formulario Modal -->
+  <div class="modal" id="modalFormulario">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTitle"></h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="hidden" id="txtIdUsuario">
+            <label for="txtNombre">Nombre:</label>
+            <input type="text" class="form-control" id="txtNombre" placeholder="Ingrese el nombre">
+          </div>
+          <div class="form-group">
+            <label for="txtClave">Clave:</label>
+            <input type="password" class="form-control" id="txtClave" placeholder="Ingrese la clave">
+          </div>
+          <div class="form-group">
+            <label for="txtPersona">Persona:</label>
+            <input type="hidden" id="txtIdPersona">
+            <input type="text" class="form-control" id="txtPersona" placeholder="Click para asignar una persona" readonly>
+          </div>
+          <div class="form-group">
+            <label for="txtRol">Rol:</label>
+            <input type="hidden" id="txtIdRol">
+            <input type="text" class="form-control" id="txtRol" placeholder="Click para asignar uu Rol" readonly>
+          </div>
+          <div class="form-group">
+            <label for="selEstado">Estado:</label>
+            <select class="form-control" id="selEstado">
+              <option value="1">Activo</option>
+              <option value="0">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- Modal para seleccionar Persona -->
+  <div class="modal" id="modalBuscarPersona">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalPersonaTitle">Seleccionar Persona</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="tblPersona">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Apellido</th>
+                  <th>CI</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalBuscarRol">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalRolTitle">Seleccionar Rol</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="tblRol">
+              <thead>
+                <tr>
+                  <th>Rol</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4 d-none" id="rowAlerta">
+    <div class="col col-md-12">
+      <div class="alert alert-success">
+        <strong>Registro Exitoso!</strong>
+        <div class="row" id="mostrarAlerta"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+  const initDatatable = () => {
+    $('#tbl').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/usuarios',
+      columns: [
+        { data: 'usu_nombre' },
+        { data: 'rol_nombre' },  
+        { data: 'usu_estado', render: function (data) { return Number(data) === 1 ? 'Activo' : 'Inactivo'; } },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_editar" class="btn btn-primary" data-idusuario="${row.idusuario}">Editar</button>
+                    <button type="button" name="btn_eliminar" class="btn btn-danger" data-idusuario="${row.idusuario}">Eliminar</button>`;
+          }
+        }
+      ]
+    });
+  }
+
+  const initDatatablePersona = () => {
+    $('#tblPersona').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/personas',
+      columns: [
+        { data: 'per_nombre' },
+        { data: 'per_apellido' },
+        { data: 'per_ci' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_seleccionar_persona" class="btn btn-primary" data-idpersona="${row.idpersona}" data-persona="${row.per_nombre}">
+                      <i class="fa fa-check"></i> Seleccionar
+                    </button>`;
+          }
+        }
+      ]
+    });
+
+    $('#tblPersona').on('click', 'button[name="btn_seleccionar_persona"]', function () {
+      const idPersona = $(this).data('idpersona');
+      const persona = $(this).data('persona');
+      $('#txtPersona').val(persona);
+      $('#txtIdPersona').val(idPersona);
+      $('#modalBuscarPersona').modal('hide');
+    });
+  }
+
+  const initDatatableRol = () => {
+    $('#tblRol').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/roles',
+      columns: [
+        { data: 'rol_nombre' },
+        {
+          data: function (row) {
+            return `<button type="button" name="btn_seleccionar_rol" class="btn btn-primary" data-idrol="${row.idrol}" data-rol="${row.rol_nombre}">
+                      <i class="fa fa-check"></i> Seleccionar
+                    </button>`;
+          }
+        }
+      ]
+    });
+
+    $('#tblRol').on('click', 'button[name="btn_seleccionar_rol"]', function () {
+      const idRol = $(this).data('idrol');
+      const rol = $(this).data('rol');
+      $('#txtRol').val(rol);
+      $('#txtIdRol').val(idRol);
+      $('#modalBuscarRol').modal('hide');
+    });
+  }
+
+  const agregar = () => {
+    $('#btnAgregar').on('click', function () {
+      $('#modalTitle').text("Agregar Usuario");
+      $('#txtIdUsuario').val("");
+      $('#txtNombre').val("");
+      $('#txtClave').val("");
+      $('#txtPersona').val("");
+      $('#txtIdPersona').val("");
+      $('#txtRol').val("");
+      $('#txtIdRol').val("");
+      $('#selEstado').val("1");
+      $('#modalFormulario').modal();
+    });
+  }
+
+  const buscarPersona = () => {
+    $('#txtPersona').on('click', function () {
+      $('#modalPersonaTitle').text("Seleccionar Persona");
+      $('#modalBuscarPersona').modal();
+    });
+  }
+  const buscarRol = () => {
+    $('#txtRol').on('click', function () {
+      $('#modalRolTitle').text("Seleccionar Rol");
+      $('#modalBuscarRol').modal();
+    });
+  }
+
+  const guardar = () => {
+    $('#btnGuardar').on('click', function () {
+      const idUsuario = $('#txtIdUsuario').val();
+      const nombre = $('#txtNombre').val();
+      const clave = $('#txtClave').val();
+      const persona = $('#txtIdPersona').val();
+      const rol = $('#txtIdRol').val();
+      const estado = $('#selEstado').val();
+      const tabla = $('#tbl').DataTable();
+
+      if (idUsuario) {
+        // update
+        fetch(`/api/v1/usuarios/${idUsuario}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ usu_nombre:nombre, usu_clave:clave, idrol:rol, usu_estado:estado })
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Actualizado", "El usuario ha sido actualizado correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al actualizar el usuario.", "error");
+          });
+      } else {
+        // insert
+        fetch(`/api/v1/usuarios`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ usu_nombre:nombre, usu_clave:clave, idpersona:persona, idrol:rol, usu_estado:estado })
+        })
+          .then(resp => resp.json())
+          .then(data => {
+            if (data && !data.error && data.success) {
+              tabla.ajax.reload();
+              Swal.fire("Registrado", "El usuario ha sido agregado correctamente.", "success");
+            } else {
+              Swal.fire(data.error);
+            }
+          }).catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Ocurrió un error al guardar el usuario.", "error");
+          });
+      }
+      $('#txtIdUsuario').val("");
+      $('#txtNombre').val("");
+      $('#txtClave').val("");
+      $('#selRol').val("");
+      $('#selEstado').val("1");
+      $('#modalFormulario').modal("hide");
+    });
+  }
+
+  const editar = () => {
+    $('#tbl').on('click', 'button[name="btn_editar"]', function () {
+      Swal.fire({
+        title: "¿Deseas editar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          $('#modalTitle').text("Editar Usuario");
+
+          const idUsuario = $(this).data('idusuario');
+          $('#txtIdUsuario').val(idUsuario);
+
+          fetch(`/api/v1/usuarios/${idUsuario}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              $('#txtIdUsuario').val(data.data.idusuario);
+              $('#txtNombre').val(data.data.usu_nombre);
+              $('#txtClave').val(""); 
+              $('#txtPersona').val(data.data.per_nombre+" (No es posible cambiar)");
+              $('#txtIdRol').val(data.data.idrol);
+              $('#txtRol').val(data.data.rol_nombre);
+              $('#selEstado').val(data.data.usu_estado);
+              $('#modalFormulario').modal();
+            });
+        }
+      });
+    });
+  }
+
+  const eliminar = () => {
+    $('#tbl').on('click', 'button[name="btn_eliminar"]', function () {
+      const idUsuario = $(this).data('idusuario');
+      Swal.fire({
+        title: "¿Deseas eliminar este registro?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/api/v1/usuarios/${idUsuario}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              if (data && !data.error && data.success) {
+                $('#tbl').DataTable().ajax.reload();
+                Swal.fire("Eliminado", "El usuario ha sido eliminado correctamente.", "success");
+              } else {
+                Swal.fire(data.error);
+              }
+            }).catch(err => {
+              console.error(err);
+              Swal.fire("Error", "Ocurrió un error al eliminar el usuario.", "error");
+            });
+        }
+      });
+    });
+  }
+
+  const addEvents = () => {
+    agregar();
+    guardar();
+    editar();
+    eliminar();
+    buscarPersona();
+    buscarRol();
+  }
+
+  $(function () {
+    initDatatable();
+    initDatatablePersona();
+    initDatatableRol();
+    addEvents();
+  });
+</script>
+{% endblock %}
