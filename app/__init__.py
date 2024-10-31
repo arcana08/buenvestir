@@ -18,6 +18,7 @@ from app.rutas.referenciales.funcionario.funcionario_routes import funmod
 from app.rutas.referenciales.cliente.cliente_routes import climod
 from app.rutas.referenciales.materia_prima.materia_prima_routes import matmod
 from app.rutas.referenciales.producto.producto_routes import promod
+from app.rutas.gestionar_costos.costos.costo_routes import cosmod
 
 # Lista de módulos referenciales
 modulos_referenciales = [
@@ -36,6 +37,7 @@ modulos_referenciales = [
     (climod, 'cliente'),
     (matmod, 'materia_prima'),
     (promod, 'producto'),
+    (cosmod, 'costo'),
 ]
 
 # Registrar referenciales
@@ -59,6 +61,7 @@ from app.rutas.referenciales.funcionario.funcionario_api import funapi
 from app.rutas.referenciales.cliente.cliente_api import cliapi
 from app.rutas.referenciales.materia_prima.materia_prima_api import matapi
 from app.rutas.referenciales.producto.producto_api import proapi
+from app.rutas.gestionar_costos.costos.costo_api import cosapi
 
 # Lista de APIS
 apis_v1 = [
@@ -77,6 +80,7 @@ apis_v1 = [
     cliapi,
     matapi,
     proapi,
+    cosapi,
 ]
 
 # Registrar APIS v1

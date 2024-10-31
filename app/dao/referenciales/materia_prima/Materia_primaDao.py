@@ -6,7 +6,7 @@ class Materia_primaDao:
 
     def getMateria_primas(self):
         materia_primaSQL = """
-        SELECT m.idmateria_prima, m.mat_nombre, m.mat_color, m.mat_unidad_medida, m.mat_cantidad,  m.idcategoria, c.cat_nombre
+        SELECT m.idmateria_prima, m.mat_nombre, m.mat_color, m.mat_unidad_medida, m.mat_cantidad,  m.idcategoria, c.cat_nombre,m.mat_costo
         FROM materias_primas m, categorias c
         where m.idcategoria = c.idcategoria 
         """
@@ -20,7 +20,7 @@ class Materia_primaDao:
 
             # Transformar los datos en una lista de diccionarios
             return [{'idmateria_prima': materia_prima[0], 'mat_nombre': materia_prima[1], 'mat_color': materia_prima[2], 'mat_unidad_medida': materia_prima[3], 
-                     'mat_cantidad': materia_prima[4], 'idcategoria': materia_prima[5], 'cat_nombre': materia_prima[6]} for materia_prima in materia_primas]
+                     'mat_cantidad': materia_prima[4], 'idcategoria': materia_prima[5], 'cat_nombre': materia_prima[6], 'mat_costo': materia_prima[7]} for materia_prima in materia_primas]
 
         except Exception as e:
             app.logger.error(f"Error al obtener todas las materia_primas: {str(e)}")
