@@ -21,6 +21,7 @@ Materia_primas
             <th>Color</th>
             <th>Unidad de medida</th>
             <th>Cantidad</th>
+            <th>Costo</th>
             <th>Categoria</th>
             <th>Acciones</th>
           </tr>
@@ -59,7 +60,11 @@ Materia_primas
           </div>
           <div class="form-group">
             <label for="txtCantidad">Cantidad</label>
-            <input type="text" class="form-control" id="txtCantidad" placeholder="Ingrese la cantidad">
+            <input type="number" class="form-control" id="txtCantidad" placeholder="Ingrese la cantidad">
+          </div>
+          <div class="form-group">
+            <label for="txtCantidad">Costo</label>
+            <input type="number" class="form-control" id="txtCosto" placeholder="Ingrese el costo">
           </div>
         
           <div class="form-group">
@@ -92,9 +97,7 @@ Materia_primas
             <table class="table table-striped" id="tblCategoria">
               <thead>
                 <tr>
-                  <th>Pais</th>
-                  <th>Departamento</th>
-                  <th>Ciudad</th>
+                  
                   <th>Categoria</th>
                   <th>Acciones</th>
                 </tr>
@@ -131,6 +134,7 @@ Materia_primas
         { data: 'mat_color' },
         { data: 'mat_unidad_medida' },
         { data: 'mat_cantidad'},
+        { data: 'mat_costo'},
         { data: 'cat_nombre' },
         {
           data: function (row) {
@@ -177,6 +181,7 @@ Materia_primas
       $('#txtColor').val("");
       $('#txtUmedida').val("");
       $('#txtCantidad').val("");
+      $('#txtCosto').val("");
       $('#txtIdCategoria').val("");
       $('#txtCategoria').val("");
       $('#modalFormulario').modal();
@@ -197,6 +202,7 @@ Materia_primas
       const color = $('#txtColor').val();
       const umedida = $('#txtUmedida').val();
       const cantidad = $('#txtCantidad').val();
+      const costo = $('#txtCosto').val();
       const idCategoria = $('#txtIdCategoria').val();
       const tabla = $('#tbl').DataTable();
 
@@ -207,7 +213,7 @@ Materia_primas
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ nombre, color, umedida,  cantidad,  categoria: idCategoria })
+          body: JSON.stringify({ nombre, color, umedida,  cantidad, costo, categoria: idCategoria })
         })
           .then(resp => resp.json())
           .then(data => {
@@ -228,7 +234,7 @@ Materia_primas
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ nombre, color, umedida,  cantidad,  categoria: idCategoria })
+          body: JSON.stringify({ nombre, color, umedida,  cantidad,  categoria: idCategoria, costo })
         })
           .then(resp => resp.json())
           .then(data => {
@@ -248,6 +254,7 @@ Materia_primas
       $('#txtColor').val("");
       $('#txtUmedida').val("");
       $('#txtCantidad').val("");
+      $('#txtCosto').val("");
       $('#txtIdCategoria').val("");
       $('#txtCategoria').val("");
       $('#modalFormulario').modal("hide");
@@ -284,6 +291,7 @@ Materia_primas
               $('#txtColor').val(data.data.mat_color);
               $('#txtUmedida').val(data.data.mat_unidad_medida);
               $('#txtCantidad').val(data.data.mat_cantidad);
+              $('#txtCosto').val(data.data.mat_costo);
               $('#txtIdCategoria').val(data.data.idcategoria);
               $('#txtCategoria').val(data.data.cat_nombre);
               $('#modalFormulario').modal();

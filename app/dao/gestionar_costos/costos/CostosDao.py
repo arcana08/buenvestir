@@ -69,6 +69,37 @@ class CostoDao:
             cur.close()
             con.close()
 
+    def getDetallesByCostoId(self, costo_id):
+        detallesSQL = """
+        SELECT dc.idmateria_prima, mp.mat_nombre, mp.mat_costo, dc.dco_cantidad, mp.mat_cantidad, mp.mat_unidad_medida
+        FROM detalle_costos dc
+        JOIN materias_primas mp ON dc.idmateria_prima = mp.idmateria_prima
+        WHERE dc.idcosto = %s
+        """
+        conexion = Conexion()
+        con = conexion.getConexion()
+        cur = con.cursor()
+        try:
+            cur.execute(detallesSQL, (costo_id,))
+            detalles = cur.fetchall()
+            return [
+                {
+                    'idmateriaprima': row[0],
+                    'mp_nombre': row[1],
+                    'precio': row[2],
+                    'cantidad': row[3],
+                    'stock': row[4],
+                    'unidad': row[5]
+                }
+                for row in detalles
+            ]
+        except Exception as e:
+            app.logger.error(f"Error al obtener detalles del costo: {str(e)}")
+            return []
+        finally:
+            cur.close()
+            con.close()
+    
     def guardarCosto(self, producto_id, detalles):
         insertCostoSQL = """
         INSERT INTO costos(idproducto) VALUES (%s) RETURNING idcosto
@@ -106,13 +137,15 @@ class CostoDao:
         return True
 
 
-    def updateCosto(self, id, descripcion,ciudad_id):
-
-        updateCostoSQL = """
-        UPDATE costos
-        SET bar_nombre=%s,
-        idciudad=%s
-        WHERE idcosto=%s
+    def actualizarCosto(self, costo_id, producto_id, detalles):
+        eliminarDetallesSQL = """
+        DELETE FROM detalle_costos WHERE idcosto = %s
+        """
+        actualizarCostoSQL = """
+        UPDATE costos SET idproducto = %s WHERE idcosto = %s
+        """
+        insertarDetallesSQL = """
+        INSERT INTO detalle_costos(dco_cantidad, idmateria_prima, idcosto) VALUES (%s, %s, %s)
         """
 
         conexion = Conexion()
@@ -120,21 +153,32 @@ class CostoDao:
         cur = con.cursor()
 
         try:
-            cur.execute(updateCostoSQL, (descripcion,ciudad_id, id,))
-            filas_afectadas = cur.rowcount # Obtener el número de filas afectadas
-            con.commit()
+            # Actualizar cabecera del costo
+            cur.execute(actualizarCostoSQL, (producto_id, costo_id))
 
-            return filas_afectadas > 0 # Retornar True si se actualizó al menos una fila
+            # Eliminar detalles existentes
+            cur.execute(eliminarDetallesSQL, (costo_id,))
+
+            # Insertar nuevos detalles
+            for detalle in detalles:
+                dco_cantidad, idmateria_prima = detalle
+                cur.execute(insertarDetallesSQL, (dco_cantidad, idmateria_prima, costo_id))
+
+            # Confirmar cambios
+            con.commit()
+            return True
 
         except Exception as e:
-            app.logger.error(f"Error al actualizar costo: {str(e)}")
-            con.rollback()
+            app.logger.error(f"Error al actualizar costo y detalles para idcosto {costo_id}: {str(e)}")
+            con.rollback()  # Revertir cambios si hubo error
             return False
 
         finally:
             cur.close()
             con.close()
 
+    
+            
     def deleteCosto(self, id):
 
         updateCostoSQL = """

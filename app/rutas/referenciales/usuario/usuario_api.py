@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app as app
+from werkzeug.security import generate_password_hash
 from app.dao.referenciales.usuario.UsuarioDao import UsuarioDao
 
 # Crear blueprint para usuarios
@@ -49,6 +50,7 @@ def getUsuario(usuario_id):
         }), 500
 
 # Agregar un nuevo usuario
+# Agregar un nuevo usuario
 @userapi.route('/usuarios', methods=['POST'])
 def addUsuario():
     data = request.get_json()
@@ -56,7 +58,6 @@ def addUsuario():
 
     # Validar que el JSON no esté vacío y tenga las propiedades necesarias
     campos_requeridos = ['usu_nombre', 'usu_clave', 'usu_estado', 'idpersona', 'idrol']
-
     for campo in campos_requeridos:
         if campo not in data or data[campo] is None or len(str(data[campo]).strip()) == 0:
             return jsonify({
@@ -66,7 +67,7 @@ def addUsuario():
 
     try:
         usu_nombre = data['usu_nombre'].upper()
-        usu_clave = data['usu_clave']
+        usu_clave = generate_password_hash(data['usu_clave'])  # Hashear contraseña
         usu_estado = data['usu_estado']
         idpersona = data['idpersona']
         idrol = data['idrol']
@@ -78,7 +79,6 @@ def addUsuario():
                 'data': {
                     'id': usuario_id,
                     'usu_nombre': usu_nombre,
-                    'usu_clave': usu_clave,
                     'usu_estado': usu_estado,
                     'idpersona': idpersona,
                     'idrol': idrol
@@ -102,7 +102,6 @@ def updateUsuario(usuario_id):
 
     # Validar que el JSON no esté vacío y tenga las propiedades necesarias
     campos_requeridos = ['usu_nombre', 'usu_clave', 'usu_estado', 'idrol']
-
     for campo in campos_requeridos:
         if campo not in data or data[campo] is None or len(str(data[campo]).strip()) == 0:
             return jsonify({
@@ -110,20 +109,18 @@ def updateUsuario(usuario_id):
                 'error': f'El campo {campo} es obligatorio y no puede estar vacío.'
             }), 400
 
-    usu_nombre = data['usu_nombre'].upper()
-    usu_clave = data['usu_clave']
-    usu_estado = data['usu_estado']
-    
-    idrol = data['idrol']
-
     try:
+        usu_nombre = data['usu_nombre'].upper()
+        usu_clave = generate_password_hash(data['usu_clave'])  # Hashear contraseña
+        usu_estado = data['usu_estado']
+        idrol = data['idrol']
+
         if userdao.updateUsuario(usuario_id, usu_nombre, usu_clave, usu_estado, idrol):
             return jsonify({
                 'success': True,
                 'data': {
                     'id': usuario_id,
                     'usu_nombre': usu_nombre,
-                    'usu_clave': usu_clave,
                     'usu_estado': usu_estado,
                     'idrol': idrol
                 },

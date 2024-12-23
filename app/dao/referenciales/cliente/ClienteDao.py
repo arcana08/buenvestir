@@ -6,7 +6,7 @@ class ClienteDao:
 
     def getClientes(self):
         clienteSQL = """
-        SELECT c.idcliente, p.per_nombre
+        SELECT c.idcliente, p.per_nombre, p.per_apellido, p.per_ci
         FROM clientes c, personas p
         WHERE c.idpersona = p.idpersona 
         """
@@ -18,7 +18,11 @@ class ClienteDao:
             clientes = cur.fetchall()
 
             # Transformar los datos en una lista de diccionarios
-            return [{'idcliente': cliente[0], 'per_nombre': cliente[1]} 
+            return [{'idcliente': cliente[0], 
+                     'per_nombre': cliente[1],
+                     'per_apellido': cliente[2],
+                     'per_ci': cliente[3]
+                     } 
                     for cliente in clientes]
 
         except Exception as e:

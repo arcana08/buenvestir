@@ -57,7 +57,7 @@ def addMateria_prima():
     perdao = Materia_primaDao()
     
     # Validar que el JSON no esté vacío y tenga las propiedades necesarias
-    campos_requeridos = ['nombre', 'color', 'umedida', 'cantidad', 'categoria']
+    campos_requeridos = ['nombre', 'color', 'umedida', 'cantidad', 'categoria','costo']
 
     # Verificar si faltan campos o son vacíos
     for campo in campos_requeridos:
@@ -73,8 +73,9 @@ def addMateria_prima():
         umedida = data['umedida']
         cantidad = data['cantidad']
         categoria = data['categoria']
+        costo = data['costo']
 
-        materia_prima_id = perdao.guardarMateria_prima(nombre, color, umedida, cantidad, categoria)
+        materia_prima_id = perdao.guardarMateria_prima(nombre, color, umedida, cantidad, categoria, costo)
         if materia_prima_id is not None:
             return jsonify({
                 'success': True,
@@ -84,7 +85,8 @@ def addMateria_prima():
                     'color': color,
                     'umedida': umedida,
                     'cantidad': cantidad,
-                    'categoria': categoria
+                    'categoria': categoria,
+                    'costo': costo
                     
                 },
                 'error': None
@@ -103,7 +105,7 @@ def updateMateria_prima(materia_prima_id):
     data = request.get_json()
     perdao = Materia_primaDao()
     # Validar que el JSON no esté vacío y tenga las propiedades necesarias
-    campos_requeridos = ['nombre', 'color', 'umedida', 'cantidad', 'categoria']
+    campos_requeridos = ['nombre', 'color', 'umedida', 'cantidad', 'categoria','costo']
 
     # Verificar si faltan campos o son vacíos
     for campo in campos_requeridos:
@@ -118,9 +120,10 @@ def updateMateria_prima(materia_prima_id):
     umedida = data['umedida']
     cantidad = data['cantidad']
     categoria = data['categoria']
+    costo = data['costo']
 
     try:
-        if perdao.updateMateria_prima(materia_prima_id, nombre, color, umedida, cantidad, categoria):
+        if perdao.updateMateria_prima(materia_prima_id, nombre, color, umedida, cantidad, categoria, costo):
             return jsonify({
                 'success': True,
                 'data': {
@@ -129,7 +132,8 @@ def updateMateria_prima(materia_prima_id):
                     'color': color,
                     'umedida': umedida,
                     'cantidad': cantidad,
-                    'categoria': categoria
+                    'categoria': categoria,
+                    'costo': costo
                 },
                 'error': None
             }), 200

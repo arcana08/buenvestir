@@ -50,6 +50,32 @@ def getCosto(costo_id):
             'error': 'Ocurrió un error interno. Consulte con el administrador.'
         }), 500
 
+@cosapi.route('/costos/<int:costo_id>/detalles', methods=['GET'])
+def getCostoDetalles(costo_id):
+    cosdao = CostoDao()
+
+    try:
+        detalles = cosdao.getDetallesByCostoId(costo_id)
+
+        if detalles:
+            return jsonify({
+                'success': True,
+                'data': detalles,
+                'error': None
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'No se encontraron detalles para el costo con el ID proporcionado.'
+            }), 404
+
+    except Exception as e:
+        app.logger.error(f"Error al obtener detalles del costo: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Ocurrió un error interno. Consulte con el administrador.'
+        }), 500
+
 # Agrega una nueva costo
 @cosapi.route('/costos', methods=['POST'])
 def addCosto():
@@ -125,32 +151,65 @@ def updateCosto(costo_id):
     data = request.get_json()
     cosdao = CostoDao()
 
-    # Validar que el JSON no esté vacío y tenga las propiedades necesarias
-    campos_requeridos = ['descripcion','ciudad']
-
-    # Verificar si faltan campos o son vacíos
+    # Validar campos requeridos
+    campos_requeridos = ['producto_id', 'detalles']
     for campo in campos_requeridos:
-        if campo not in data or data[campo] is None or len(str(data[campo]).strip()) == 0:
+        if campo not in data or data[campo] is None or not str(data[campo]).strip():
             return jsonify({
-                            'success': False,
-                            'error': f'El campo {campo} es obligatorio y no puede estar vacío.'
-                            }), 400
-    descripcion = data['descripcion']
-    ciudad_id = data['ciudad']
+                'success': False,
+                'error': f'El campo {campo} es obligatorio y no puede estar vacío.'
+            }), 400
+
+    # Validar que detalles sea una lista válida
+    detalles = data['detalles']
+    if not isinstance(detalles, list) or not all(isinstance(d, dict) for d in detalles):
+        return jsonify({
+            'success': False,
+            'error': 'El campo detalles debe ser una lista de objetos con dco_cantidad e idmateria_prima.'
+        }), 400
+
+    # Procesar detalles
+    detalles_procesados = []
+    for detalle in detalles:
+        if 'dco_cantidad' in detalle and 'idmateria_prima' in detalle:
+            try:
+                dco_cantidad = float(detalle['dco_cantidad'])
+                idmateria_prima = int(detalle['idmateria_prima'])
+                detalles_procesados.append((dco_cantidad, idmateria_prima))
+            except ValueError:
+                return jsonify({
+                    'success': False,
+                    'error': 'Los valores de dco_cantidad deben ser numéricos y idmateria_prima debe ser un entero.'
+                }), 400
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Cada objeto en detalles debe contener dco_cantidad e idmateria_prima.'
+            }), 400
+
     try:
-        if cosdao.updateCosto(costo_id, descripcion.upper(),ciudad_id):
+        # Actualizar costo y detalles
+        producto_id = int(data['producto_id'])
+        actualizado = cosdao.actualizarCosto(costo_id, producto_id, detalles_procesados)
+
+        if actualizado:
             return jsonify({
                 'success': True,
-                'data': {'id': costo_id, 'descripcion': descripcion,'ciudad': ciudad_id},
+                'data': {
+                    'id': costo_id,
+                    'producto_id': producto_id,
+                    'detalles': detalles
+                },
                 'error': None
             }), 200
         else:
             return jsonify({
                 'success': False,
-                'error': 'No se encontró el costo con el ID proporcionado o no se pudo actualizar.'
-            }), 404
+                'error': 'No se pudo actualizar el costo. Consulte con el administrador.'
+            }), 500
+
     except Exception as e:
-        app.logger.error(f"Error al actualizar costo: {str(e)}")
+        app.logger.exception("Error al actualizar costo")
         return jsonify({
             'success': False,
             'error': 'Ocurrió un error interno. Consulte con el administrador.'

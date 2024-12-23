@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app as app
+from flask_wtf.csrf import validate_csrf
 from app.dao.referenciales.pais.PaisDao import PaisDao
 
 paiapi = Blueprint('paiapi', __name__)
@@ -102,6 +103,7 @@ def updatePais(pais_id):
                             }), 400
     descripcion = data['descripcion']
     try:
+        
         if paidao.updatePais(pais_id, descripcion.upper()):
             return jsonify({
                 'success': True,

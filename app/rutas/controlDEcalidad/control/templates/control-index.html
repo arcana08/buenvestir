@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block titulo %}
+Control de Calidad
+{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <h3>Listar Ordenes de Producciones</h3>
+
+  <!-- tarjeta -->
+  <div class="card">
+    <div class="card-header">
+
+    </div>
+    <div class="card-body">
+      <div class="table-responsive" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
+        <table class="table table-striped" id="tbl">
+          <thead>
+            <tr>
+              <th>ID Orden</th>
+              <th>Cliente</th>
+              <th>CI</th>
+              <th>Estado</th>
+              <th>Gestionar</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- /tarjeta -->
+
+  <!-- modal de gestion de ordenes -->
+  <div class="modal" id="modalFormulariog">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalTitleg"></h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="hidden" id="txtidproducciong">
+            <label for="txtClienteg">Cliente:</label>
+            <input type="hidden" id="txtIdClientef">
+            <input type="text" class="form-control" id="txtClienteg" readonly>
+            <label for="txtDescripcion">Prendas seleccionadas:</label>
+            <div class="table-responsive" style="max-height: 200px; overflow-y: auto; overflow-x: auto;">
+              <table class="table table-striped" id="detallesg">
+                <thead>
+                  <tr>
+                    <th>Prenda</th>
+                    <th>Color</th>
+                  </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal footer -->
+        <div class="modal-footer">
+
+          <button type="button" class="btn btn-primary" id="btnFinalizar">Aprobar</button>
+          <button type="button" class="btn btn-primary" id="btnRechazar">Rechazar</button>
+          <button type="button" class="btn btn-primary" id="btnMejorar">Mejorar</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <div class="row mt-4 d-none" id="rowAlerta">
+    <div class="col col-md-12">
+      <div class="alert alert-success">
+        <strong>Registro Exitoso!</strong>
+        <div class="row" id="mostrarAlerta"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+
+  const initDatatable = () => {
+    $('#tbl').DataTable({
+      language: {
+        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
+      },
+      ajax: '/api/v1/producciones',
+      columns: [
+        { data: 'idorden_produccion' },
+        {
+          data: 'per_nombre',
+          render: function (data, type, row) {
+            return row.per_nombre + ' ' + row.per_apellido;
+          }
+        },
+        { data: 'per_ci' },
+        { data: 'eta_nombre' },
+        {
+          data: function (row) {
+            const estadosHabilitados = ["EN REVISION"];
+            const isEnabled = estadosHabilitados.includes(row.eta_nombre);
+
+            return `<button type="button" name="btn_editar" class="btn btn-primary" 
+                data-idorden="${row.idorden_produccion}" 
+                ${isEnabled ? "" : "disabled"}>
+                Gestionar
+            </button>`;
+          }
+        }
+      ]
+    });
+  }
+  const gestionarProduccion = () => {
+    const tabla = $('#tbl').DataTable();
+    const dataIdProduccion = $('#txtidproducciong').val();
+    //alert(dataIdProduccion);
+    // Función para manejar las diferentes acciones
+    const enviarAccion = (accion) => {
+      Swal.fire({
+        title: "¿Deseas " + accion + " esta orden?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`/api/v1/produccionesfin`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              idproduccion: dataIdProduccion,
+              accion: accion
+            }),
+          })
+            .then(resp => {
+              if (!resp.ok) {
+                return resp.json().then(data => {
+                  throw new Error(data.error || "Error desconocido.");
+                });
+              }
+              return resp.json(); 
+            })
+            .then(data => {
+              if (data.success) {
+                $('#modalFormulariog').modal("hide");
+                tabla.ajax.reload();
+                Swal.fire("Actualizado", data.message || "La orden ha sido actualizada correctamente.", "success");
+              } else {
+                Swal.fire("Error", data.error || "Ocurrió un error desconocido.", "error");
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              Swal.fire("Error", err.message || "Ocurrió un error al actualizar la orden.", "error");
+            });
+        }
+      });
+    };
+
+    // Asociar los botones con sus respectivas acciones
+    $('#btnFinalizar').on('click', () => enviarAccion('finalizar'));
+    $('#btnMejorar').on('click', () => enviarAccion('mejorar'));
+    $('#btnRechazar').on('click', () => enviarAccion('rechazar'));
+  };
+
+
+
+  const editar = () => {
+    $('#tbl').on('click', 'button[name="btn_editar"]', function () {
+      // Mostrar mensaje de confirmación usando sweetalert
+      Swal.fire({
+        title: "¿Deseas Gestionar esta orden?",
+        showCancelButton: true,
+        confirmButtonText: "Si",
+        cancelButtonText: `No`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          //Swal.fire("Saved!", "", "success");
+          $('#modalTitleg').text("Gestionar orden de produccion");
+
+          const idOrden = $(this).data('idorden');
+          $('#txtidproducciong').val(idOrden);
+          //alert($(this).data('idorden'));
+          // Necesitamos obtener la descripción del backend
+          fetch(`/api/v1/producciones/${idOrden}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(resp => {
+              if (!resp.ok) {
+                throw new Error(`Error en la solicitud: ${resp.statusText}`);
+              }
+              return resp.json();
+            })
+            .then(data => {
+              $('#txtIdClienteg').val(data.data.idcliente);
+              $('#txtClienteg').val(data.data.per_nombre);
+              $('#modalFormulariog').modal();
+              gestionarProduccion();
+              return fetch(`/api/v1/producciones/${idOrden}/detalles`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              });
+            })
+            .then(resp => {
+              if (!resp.ok) {
+                throw new Error(`Error en la solicitud: ${resp.statusText}`);
+              }
+              return resp.json();
+            })
+            .then(detallesData => {
+              const detalles = detallesData.data;
+              const table = $("#detallesg tbody");
+              table.empty(); // Limpiar tabla
+
+              detalles.forEach(detalle => {
+                const { idcosto, pro_nombre, pro_color } = detalle;
+
+                const newRow = $("<tr>");
+                $("<td>").text(pro_nombre).appendTo(newRow);
+                $("<td>").text(pro_color).appendTo(newRow);
+
+                table.append(newRow);
+              });
+
+              // Actualizar total general en el formulario
+
+              // Mostrar modal
+              //$('#modalFormulario').modal();
+            })
+            .catch(error => {
+              console.error("Error al obtener los datos:", error);
+              Swal.fire("Error", "No se pudo cargar el costo. Intente nuevamente.", "error");
+            });
+        }
+      });
+    });
+  }
+
+
+
+  const addEvents = () => {
+    editar();
+    gestionarProduccion();
+  }
+
+  $(function () {
+    initDatatable();
+    //initDatatableb();
+    //initDatatablem();
+    //initDatatablec();
+    addEvents();
+  });
+</script>
+{% endblock %}

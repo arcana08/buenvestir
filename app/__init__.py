@@ -1,6 +1,25 @@
-from flask import Flask
+from flask import Flask, session, request, jsonify
+from datetime import timedelta
+from flask_wtf.csrf import CSRFProtect
+
 
 app = Flask(__name__)
+
+# creamos el token
+#csrf = CSRFProtect()
+#csrf.init_app(app)
+
+# inicializar el secret key
+app.secret_key = b'_5#y2L"F6Q7z\n\xec]/'
+
+# Establecer duración de la sesión, 15 minutos
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
+
+# importar modulo de seguridad
+from app.rutas.login.login_routes import logmod
+app.register_blueprint(logmod)
+
+
 
 # Importar referenciales
 from app.rutas.referenciales.ciudad.ciudad_routes import ciumod
@@ -19,6 +38,8 @@ from app.rutas.referenciales.cliente.cliente_routes import climod
 from app.rutas.referenciales.materia_prima.materia_prima_routes import matmod
 from app.rutas.referenciales.producto.producto_routes import promod
 from app.rutas.gestionar_costos.costos.costo_routes import cosmod
+from app.rutas.gestionar_produccion.produccion.produccion_routes import prodmod
+from app.rutas.controlDEcalidad.control.control_routes import conmod
 
 # Lista de módulos referenciales
 modulos_referenciales = [
@@ -38,6 +59,8 @@ modulos_referenciales = [
     (matmod, 'materia_prima'),
     (promod, 'producto'),
     (cosmod, 'costo'),
+    (prodmod, 'produccion'),
+    (conmod, 'control'),
 ]
 
 # Registrar referenciales
@@ -62,6 +85,7 @@ from app.rutas.referenciales.cliente.cliente_api import cliapi
 from app.rutas.referenciales.materia_prima.materia_prima_api import matapi
 from app.rutas.referenciales.producto.producto_api import proapi
 from app.rutas.gestionar_costos.costos.costo_api import cosapi
+from app.rutas.gestionar_produccion.produccion.produccion_api import prodapi
 
 # Lista de APIS
 apis_v1 = [
@@ -81,6 +105,7 @@ apis_v1 = [
     matapi,
     proapi,
     cosapi,
+    prodapi,
 ]
 
 # Registrar APIS v1

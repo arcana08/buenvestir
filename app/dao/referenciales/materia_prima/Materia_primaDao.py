@@ -32,7 +32,7 @@ class Materia_primaDao:
 
     def getMateria_primaById(self, id):
         materia_primaSQL = """
-        SELECT m.idmateria_prima, m.mat_nombre, m.mat_color, m.mat_unidad_medida, m.mat_cantidad,  m.idcategoria, c.cat_nombre
+        SELECT m.idmateria_prima, m.mat_nombre, m.mat_color, m.mat_unidad_medida, m.mat_cantidad,  m.idcategoria, c.cat_nombre,m.mat_costo 
         FROM materias_primas m, categorias c
         where m.idcategoria = c.idcategoria and m.idmateria_prima = %s
         """
@@ -51,7 +51,8 @@ class Materia_primaDao:
                     'mat_unidad_medida': materia_primaEncontrada[3],
                     'mat_cantidad': materia_primaEncontrada[4],
                     'idcategoria': materia_primaEncontrada[5],
-                    'cat_nombre': materia_primaEncontrada[6]
+                    'cat_nombre': materia_primaEncontrada[6],
+                    'mat_costo': materia_primaEncontrada[7]
                     
                 }  # Retornar los datos de la materia_prima
             else:
@@ -64,10 +65,10 @@ class Materia_primaDao:
             cur.close()
             con.close()
 
-    def guardarMateria_prima(self, nombre, color, umedida, cantidad, categoria):
+    def guardarMateria_prima(self, nombre, color, umedida, cantidad, categoria,costo):
         insertMateria_primaSQL = """
-        INSERT INTO materias_primas (mat_nombre, mat_color, mat_unidad_medida, mat_cantidad,  idcategoria) 
-        VALUES (%s, %s, %s, %s, %s) RETURNING idmateria_prima
+        INSERT INTO materias_primas (mat_nombre, mat_color, mat_unidad_medida, mat_cantidad,  idcategoria,mat_costo) 
+        VALUES (%s, %s, %s, %s, %s,%s) RETURNING idmateria_prima
         """
 
         conexion = Conexion()
@@ -75,7 +76,7 @@ class Materia_primaDao:
         cur = con.cursor()
 
         try:
-            cur.execute(insertMateria_primaSQL, ( nombre, color, umedida, cantidad, categoria))
+            cur.execute(insertMateria_primaSQL, ( nombre, color, umedida, cantidad, categoria,costo))
             materia_prima_id = cur.fetchone()[0]
             con.commit()  # se confirma la insercion
             return materia_prima_id
@@ -89,10 +90,10 @@ class Materia_primaDao:
             cur.close()
             con.close()
 
-    def updateMateria_prima(self, id,  nombre, color, umedida, cantidad, categoria):
+    def updateMateria_prima(self, id,  nombre, color, umedida, cantidad, categoria, costo):
         updateMateria_primaSQL = """
         UPDATE materias_primas
-        SET mat_nombre=%s, mat_color=%s, mat_unidad_medida=%s, mat_cantidad=%s, idcategoria=%s
+        SET mat_nombre=%s, mat_color=%s, mat_unidad_medida=%s, mat_cantidad=%s, idcategoria=%s, mat_costo=%s
         WHERE idmateria_prima=%s
         """
 
@@ -101,7 +102,7 @@ class Materia_primaDao:
         cur = con.cursor()
 
         try:
-            cur.execute(updateMateria_primaSQL, (nombre, color, umedida, cantidad, categoria, id))
+            cur.execute(updateMateria_primaSQL, (nombre, color, umedida, cantidad, categoria,costo, id))
             filas_afectadas = cur.rowcount  # Obtener el número de filas afectadas
             con.commit()
 
