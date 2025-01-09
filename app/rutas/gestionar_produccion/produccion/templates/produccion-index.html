@@ -22,6 +22,7 @@ Orden de Produccion
               <th>Cliente</th>
               <th>CI</th>
               <th>Estado</th>
+              <th>Fecha de creacion</th>
               <th>Gestionar</th>
             </tr>
           </thead>
@@ -319,6 +320,7 @@ Orden de Produccion
         },
         { data: 'per_ci' },
         { data: 'eta_nombre' },
+        { data: 'fecha' },
         {
           data: function (row) {
             const estadosHabilitados = ["PENDIENTE PRODUCCION", "MEJORABLE"];

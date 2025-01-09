@@ -28,6 +28,18 @@
 
     <div class="container">
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div id="flash-messages">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
         <!-- Outer Row -->
         <div class="row justify-content-center align-items-center vh-100">
 
@@ -102,6 +114,17 @@
 
     <!-- Custom scripts for all pages-->
     <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
+
+    <script>
+        setTimeout(() => {
+            const flashMessages = document.getElementById('flash-messages');
+            if (flashMessages) {
+                flashMessages.style.transition = "opacity 0.5s ease";
+                flashMessages.style.opacity = "0";
+                setTimeout(() => flashMessages.remove(), 500);
+            }
+        }, 3000);
+    </script>
 
 </body>
 

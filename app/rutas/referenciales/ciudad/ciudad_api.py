@@ -71,7 +71,7 @@ def addCiudad():
         descripcion = data['descripcion'].upper()
         departamento_id = data['departamento']
         ciudad_id = ciudao.guardarCiudad(descripcion,departamento_id)
-        if ciudad_id is not None:
+        if ciudad_id != False:
             return jsonify({
                 'success': True,
                 'data': {'id': ciudad_id, 'descripcion': descripcion, 'departamento': departamento_id},

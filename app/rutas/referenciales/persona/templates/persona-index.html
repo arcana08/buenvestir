@@ -134,7 +134,7 @@ Personas
         { data: 'per_nombre' },
         { data: 'per_apellido' },
         { data: 'per_ci' },
-        { data: 'per_fechanac'},
+        { data: 'per_fechanac' },
         { data: 'per_telefono' },
         { data: 'bar_nombre' },
         {
@@ -208,49 +208,55 @@ Personas
       const telefono = $('#txtTelefono').val();
       const idBarrio = $('#txtIdBarrio').val();
       const tabla = $('#tbl').DataTable();
-
-      if (idPersona) {
-        // update
-        fetch(`/api/v1/personas/${idPersona}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ nombre, apellido, ci:cedula, fechanac: fechaNacimiento, telefono, barrio: idBarrio })
-        })
-          .then(resp => resp.json())
-          .then(data => {
-            if (data && !data.error && data.success) {
-              tabla.ajax.reload();
-              Swal.fire("Actualizado", "La persona ha sido actualizada correctamente.", "success");
-            } else {
-              Swal.fire(data.error);
-            }
-          }).catch(err => {
-            console.error(err);
-            Swal.fire("Error", "Ocurrió un error al actualizar la persona.", "error");
-          });
+      const fechaIngresada = new Date(fechaNacimiento);
+      const fechaActual = new Date();
+      if (fechaIngresada >= fechaActual) {
+        Swal.fire("Error", "La fecha de nacimiento no puede ser posterior a la fecha actual.", "error");
+        return;
       } else {
-        // insert
-        fetch(`/api/v1/personas`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ nombre, apellido, ci:cedula, fechanac: fechaNacimiento, telefono, barrio: idBarrio })
-        })
-          .then(resp => resp.json())
-          .then(data => {
-            if (data && !data.error && data.success) {
-              tabla.ajax.reload();
-              Swal.fire("Registrado", "La persona ha sido agregada correctamente.", "success");
-            } else {
-              Swal.fire(data.error);
-            }
-          }).catch(err => {
-            console.error(err);
-            Swal.fire("Error", "Ocurrió un error al guardar persona.", "error");
-          });
+        if (idPersona) {
+          // update
+          fetch(`/api/v1/personas/${idPersona}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nombre, apellido, ci: cedula, fechanac: fechaNacimiento, telefono, barrio: idBarrio })
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              if (data && !data.error && data.success) {
+                tabla.ajax.reload();
+                Swal.fire("Actualizado", "La persona ha sido actualizada correctamente.", "success");
+              } else {
+                Swal.fire(data.error);
+              }
+            }).catch(err => {
+              console.error(err);
+              Swal.fire("Error", "Ocurrió un error al actualizar la persona.", "error");
+            });
+        } else {
+          // insert
+          fetch(`/api/v1/personas`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nombre, apellido, ci: cedula, fechanac: fechaNacimiento, telefono, barrio: idBarrio })
+          })
+            .then(resp => resp.json())
+            .then(data => {
+              if (data && !data.error && data.success) {
+                tabla.ajax.reload();
+                Swal.fire("Registrado", "La persona ha sido agregada correctamente.", "success");
+              } else {
+                Swal.fire(data.error);
+              }
+            }).catch(err => {
+              console.error(err);
+              Swal.fire("Error", "Ocurrió un error al guardar persona.", "error");
+            });
+        }
       }
       $('#txtIdPersona').val("");
       $('#txtNombre').val("");

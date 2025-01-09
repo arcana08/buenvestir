@@ -11,24 +11,26 @@ def login():
         # lo que viene del formulario
         usuario_nombre = request.form['usuario_nombre']
         usuario_clave = request.form['usuario_clave']
-        # hacer la validacion contra la bd
+        # hacer la validación contra la bd
         login_dao = LoginDao()
         usuario_encontrado = login_dao.buscarUsuario(usuario_nombre)
-        if 'usu_nombre' in usuario_encontrado:
+        if usuario_encontrado and 'usu_nombre' in usuario_encontrado:
             password_hash_del_usuario = usuario_encontrado['usu_clave']
             if check_password_hash(
                 pwhash=password_hash_del_usuario, password=usuario_clave):
-                # crear la sesión
-                session.clear() # limpiar cualquier sesión previa
+                # Crear la sesión
+                session.clear()  # Limpiar cualquier sesión previa
                 session.permanent = True
                 session['idusuario'] = usuario_encontrado['idusuario']
-                session['usu_nombre'] = request.form['usuario_nombre']
+                session['usu_nombre'] = usuario_encontrado['usu_nombre']
                 session['per_nombre'] = usuario_encontrado['per_nombre']
                 session['idrol'] = usuario_encontrado['idrol']
                 return redirect(url_for('login.inicio'))
+            else:
+                flash('Contraseña incorrecta.', 'warning')
         else:
-            flash('Error de login, no existe este usuario', 'warning')
-            return redirect(url_for('login.login'))
+            flash('Error de login, no existe este usuario.', 'warning')
+        return redirect(url_for('login.login'))  
     elif request.method == 'GET':
         return render_template('login.html')
     else:

@@ -7,7 +7,7 @@ class ProduccionDao:
     def getProducciones(self):
 
         produccionesQL = """
-        SELECT op.idorden_produccion,  p.per_nombre,  p.per_apellido, p.per_ci, e.eta_nombre 
+        SELECT op.idorden_produccion,  p.per_nombre,  p.per_apellido, p.per_ci, e.eta_nombre,op.fecha
         FROM  orden_produccion op, clientes c,personas p, etapas_producciones e
         where op.idcliente=c.idcliente and c.idpersona=p.idpersona and op.estado=e.idetapa_produccion
         """
@@ -25,7 +25,8 @@ class ProduccionDao:
             'per_nombre': produccion[1],
             'per_apellido': produccion[2],
             'per_ci': produccion[3],
-            'eta_nombre': produccion[4]
+            'eta_nombre': produccion[4],
+            'fecha': produccion[5]
             } for produccion in producciones]
 
         except Exception as e:
