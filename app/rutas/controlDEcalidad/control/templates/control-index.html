@@ -6,7 +6,7 @@ Control de Calidad
 
 {% block contenido %}
 <div class="container mt-4">
-  <h3>Listar Ordenes de Producciones</h3>
+  <h3>Control de calidad</h3>
 
   <!-- tarjeta -->
   <div class="card">
@@ -47,6 +47,7 @@ Control de Calidad
             <label for="txtClienteg">Cliente:</label>
             <input type="hidden" id="txtIdClientef">
             <input type="text" class="form-control" id="txtClienteg" readonly>
+            
             <label for="txtDescripcion">Prendas seleccionadas:</label>
             <div class="table-responsive" style="max-height: 200px; overflow-y: auto; overflow-x: auto;">
               <table class="table table-striped" id="detallesg">
@@ -60,6 +61,26 @@ Control de Calidad
 
                 </tbody>
               </table>
+            </div>
+
+            <label>Checklist de calidad:</label>
+            <div id="checklistCalidad" class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="chk1">
+                <label class="form-check-label" for="chk1">Costura sin defectos</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="chk2">
+                <label class="form-check-label" for="chk2">Costura resistente</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="chk3">
+                <label class="form-check-label" for="chk3">Color uniforme</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="chk4">
+                <label class="form-check-label" for="chk4">Sin manchas o daños</label>
+              </div>
             </div>
           </div>
         </div>
@@ -91,6 +112,18 @@ Control de Calidad
 
 {% block js %}
 <script>
+  function formatearFecha(fechaStr) {
+    if (!fechaStr) return '';
+    const fecha = new Date(fechaStr);
+    if (isNaN(fecha)) return fechaStr;
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    const hora = String(fecha.getHours()).padStart(2, '0');
+    const min = String(fecha.getMinutes()).padStart(2, '0');
+    const seg = String(fecha.getSeconds()).padStart(2, '0');
+    return `${dia}/${mes}/${anio}`;
+  }
 
   const initDatatable = () => {
     $('#tbl').DataTable({
@@ -108,7 +141,12 @@ Control de Calidad
         },
         { data: 'per_ci' },
         { data: 'eta_nombre' },
-        { data: 'fecha' },
+        {
+          data: 'fecha',
+          render: function (data) {
+            return formatearFecha(data);
+          }
+        },
         {
           data: function (row) {
             const estadosHabilitados = ["EN REVISION"];
@@ -153,7 +191,7 @@ Control de Calidad
                   throw new Error(data.error || "Error desconocido.");
                 });
               }
-              return resp.json(); 
+              return resp.json();
             })
             .then(data => {
               if (data.success) {
@@ -191,7 +229,7 @@ Control de Calidad
       }).then((result) => {
         if (result.isConfirmed) {
           //Swal.fire("Saved!", "", "success");
-          $('#modalTitleg').text("Gestionar orden de produccion");
+          $('#modalTitleg').text("Control de Calidad de Producción");
 
           const idOrden = $(this).data('idorden');
           $('#txtidproducciong').val(idOrden);
@@ -256,6 +294,22 @@ Control de Calidad
     });
   }
 
+
+
+  function validarChecklist() {
+    const todosMarcados = 
+      $('#chk1').is(':checked') &&
+      $('#chk2').is(':checked') &&
+      $('#chk3').is(':checked') &&
+      $('#chk4').is(':checked');
+    $('#btnFinalizar').prop('disabled', !todosMarcados);
+  }
+  $('#modalFormulariog').on('show.bs.modal', function () {
+    $('#chk1, #chk2, #chk3, #chk4').prop('checked', false);
+    validarChecklist();
+  });
+
+  $('#checklistCalidad').on('change', 'input[type="checkbox"]', validarChecklist);
 
 
   const addEvents = () => {

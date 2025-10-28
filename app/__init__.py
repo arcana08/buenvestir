@@ -40,6 +40,7 @@ from app.rutas.referenciales.producto.producto_routes import promod
 from app.rutas.gestionar_costos.costos.costo_routes import cosmod
 from app.rutas.gestionar_produccion.produccion.produccion_routes import prodmod
 from app.rutas.controlDEcalidad.control.control_routes import conmod
+from app.rutas.gestionar_produccion.presupuesto.presupuesto_routes import presmod
 
 # Lista de módulos referenciales
 modulos_referenciales = [
@@ -61,6 +62,7 @@ modulos_referenciales = [
     (cosmod, 'costo'),
     (prodmod, 'produccion'),
     (conmod, 'control'),
+    (presmod, 'presupuesto')
 ]
 
 # Registrar referenciales
@@ -86,6 +88,7 @@ from app.rutas.referenciales.materia_prima.materia_prima_api import matapi
 from app.rutas.referenciales.producto.producto_api import proapi
 from app.rutas.gestionar_costos.costos.costo_api import cosapi
 from app.rutas.gestionar_produccion.produccion.produccion_api import prodapi
+from app.rutas.gestionar_produccion.presupuesto.presupuesto_api import presuapi
 
 # Lista de APIS
 apis_v1 = [
@@ -106,6 +109,7 @@ apis_v1 = [
     proapi,
     cosapi,
     prodapi,
+    presuapi
 ]
 
 # Registrar APIS v1

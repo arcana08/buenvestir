@@ -7,7 +7,7 @@ class Conexion:
     """
     def __init__(self):
         # https://www.psycopg.org/docs/extensions.html#psycopg2.extensions.parse_dsn
-        dbname = "buenvestirbd"
+        dbname = "yvotybd"
         user = "postgres"
         password = "1"
         host = "localhost"

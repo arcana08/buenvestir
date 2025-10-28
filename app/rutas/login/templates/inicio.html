@@ -1,5 +1,24 @@
 {% extends 'base.html' %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<style>
+    html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+.fondo-prueba {
+    width: 100vw;
+    height: 100vh;
+    background: url("/static/img/dsh.png") no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+</style>
+<div class="fondo-prueba">
     
-{% block titulo %}
-Inicio
+</div>
 {% endblock %}

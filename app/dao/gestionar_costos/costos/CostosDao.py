@@ -102,7 +102,7 @@ class CostoDao:
     
     def guardarCosto(self, producto_id, detalles):
         insertCostoSQL = """
-        INSERT INTO costos(idproducto) VALUES (%s) RETURNING idcosto
+        INSERT INTO costos(idproducto, cos_total) VALUES (%s, %s) RETURNING idcosto
         """
         insertCostodetSQL = """
         INSERT INTO detalle_costos(dco_cantidad, idmateria_prima, idcosto) VALUES (%s, %s, %s)
@@ -113,36 +113,41 @@ class CostoDao:
         cur = con.cursor()
 
         try:
+            # Calcular el total sumando (cantidad * mat_costo) de cada materia prima
+            total = 0
+            for detalle in detalles:
+                dco_cantidad, idmateria_prima = detalle
+                cur.execute("SELECT mat_costo FROM materias_primas WHERE idmateria_prima = %s", (idmateria_prima,))
+                costo_unitario = cur.fetchone()[0]
+                total += float(dco_cantidad) * float(costo_unitario)
+
             # Inserta en costos y obtiene el idcosto
-            cur.execute(insertCostoSQL, (producto_id,))
-            costo_id = cur.fetchone()[0]  # Obtiene el id de la inserción en costos
-            app.logger.info(f"Detalles a insertar: {detalles}")
+            cur.execute(insertCostoSQL, (producto_id, total))
+            costo_id = cur.fetchone()[0]
+            app.logger.info(f"Detalles a insertar: {detalles} | Total: {total}")
+
             # Inserta cada detalle en detalle_costos
             for detalle in detalles:
                 dco_cantidad, idmateria_prima = detalle
                 cur.execute(insertCostodetSQL, (dco_cantidad, idmateria_prima, costo_id))
 
-            # Confirmar todas las inserciones
             con.commit()
-            
         except Exception as e:
             app.logger.error(f"Error al insertar detalle de costo para idproducto {producto_id}: {str(e)}")
-            con.rollback()  # Retrocede si hubo error
+            con.rollback()
             return False
-
         finally:
             cur.close()
             con.close()
 
         return True
 
-
     def actualizarCosto(self, costo_id, producto_id, detalles):
         eliminarDetallesSQL = """
         DELETE FROM detalle_costos WHERE idcosto = %s
         """
         actualizarCostoSQL = """
-        UPDATE costos SET idproducto = %s WHERE idcosto = %s
+        UPDATE costos SET idproducto = %s, cos_total = %s WHERE idcosto = %s
         """
         insertarDetallesSQL = """
         INSERT INTO detalle_costos(dco_cantidad, idmateria_prima, idcosto) VALUES (%s, %s, %s)
@@ -153,8 +158,16 @@ class CostoDao:
         cur = con.cursor()
 
         try:
-            # Actualizar cabecera del costo
-            cur.execute(actualizarCostoSQL, (producto_id, costo_id))
+            # Calcular el total sumando (cantidad * mat_costo) de cada materia prima
+            total = 0
+            for detalle in detalles:
+                dco_cantidad, idmateria_prima = detalle
+                cur.execute("SELECT mat_costo FROM materias_primas WHERE idmateria_prima = %s", (idmateria_prima,))
+                costo_unitario = cur.fetchone()[0]
+                total += float(dco_cantidad) * float(costo_unitario)
+
+            # Actualizar cabecera del costo con el nuevo total
+            cur.execute(actualizarCostoSQL, (producto_id, total, costo_id))
 
             # Eliminar detalles existentes
             cur.execute(eliminarDetallesSQL, (costo_id,))
@@ -164,13 +177,12 @@ class CostoDao:
                 dco_cantidad, idmateria_prima = detalle
                 cur.execute(insertarDetallesSQL, (dco_cantidad, idmateria_prima, costo_id))
 
-            # Confirmar cambios
             con.commit()
             return True
 
         except Exception as e:
             app.logger.error(f"Error al actualizar costo y detalles para idcosto {costo_id}: {str(e)}")
-            con.rollback()  # Revertir cambios si hubo error
+            con.rollback()
             return False
 
         finally:

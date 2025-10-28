@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
 {% block titulo %}
-Orden de Produccion
+Presupuestos
 {% endblock %}
 
 {% block contenido %}
 <div class="container mt-4">
-  <h3>Listar Ordenes de Producciones</h3>
+  <h3>Listar Presupuestos</h3>
 
   <!-- tarjeta -->
   <div class="card">
@@ -18,11 +18,14 @@ Orden de Produccion
         <table class="table table-striped" id="tbl">
           <thead>
             <tr>
-              <th>ID Orden</th>
+              <th>ID Presupuesto</th>
               <th>Cliente</th>
               <th>CI</th>
               <th>Estado</th>
-              <th>Fecha de creacion</th>
+              <th>Fecha de creación</th>
+              <th>Fecha Solicitud</th>
+              <th>Fecha Estado</th>
+              <th>Total</th>
               <th>Gestionar</th>
             </tr>
           </thead>
@@ -35,7 +38,6 @@ Orden de Produccion
 
   <!-- El formulario -->
   <div class="modal" id="modalFormulario">
-    <!-- La clase modal-dialog-centered centra el modal -->
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
 
@@ -48,7 +50,7 @@ Orden de Produccion
         <!-- Modal body -->
         <div class="modal-body">
           <div class="form-group">
-            <input type="hidden" id="txtidproduccion">
+            <input type="hidden" id="txtidpresupuesto">
             <label for="txtCliente">Cliente:</label>
             <input type="hidden" id="txtIdCliente">
             <input type="text" class="form-control" placeholder="click para buscar Cliente" id="txtCliente" readonly>
@@ -65,6 +67,7 @@ Orden de Produccion
                 <thead>
                   <tr>
                     <th>Prenda</th>
+                    <th>Costo</th>
                     <th>ELIMINAR</th>
                   </tr>
                 </thead>
@@ -77,10 +80,15 @@ Orden de Produccion
         </div>
 
         <!-- Modal footer -->
-        <div class="modal-footer">
-
-          <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
-          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        <div class="modal-footer d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Total:</strong>
+            <span id="totalGeneralFooter" style="font-size:1.2em;">0</span>
+          </div>
+          <div>
+            <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+          </div>
         </div>
 
       </div>
@@ -112,44 +120,49 @@ Orden de Produccion
       </div>
     </div>
   </div>
-  <!-- modal de gestion de ordenes -->
+  <!-- modal de gestion de presupuestos -->
   <div class="modal" id="modalFormulariog">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title" id="modalTitleg"></h4>
+          <h4 class="modal-title" id="modalTitleg">Gestionar Presupuesto</h4>
           <button type="button" class="close" data-dismiss="modal">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <input type="hidden" id="txtidproducciong">
+            <input type="hidden" id="txtidpresupuestog">
             <label for="txtClienteg">Cliente:</label>
-            <input type="hidden" id="txtIdClientef">
+            <input type="hidden" id="txtIdClienteg">
             <input type="text" class="form-control" id="txtClienteg" readonly>
-            <label for="txtDescripcion">Prendas seleccionadas:</label>
+            <button type="button" class="btn btn-success my-2" id="btnAgregarDetalleG">Agregar Prenda</button>
             <div class="table-responsive" style="max-height: 200px; overflow-y: auto; overflow-x: auto;">
               <table class="table table-striped" id="detallesg">
                 <thead>
                   <tr>
                     <th>Prenda</th>
-                    <th>Color</th>
+                    <th>Costo</th>
+                    <th>Eliminar</th>
                   </tr>
                 </thead>
                 <tbody>
-
                 </tbody>
               </table>
             </div>
           </div>
         </div>
-
         <!-- Modal footer -->
-        <div class="modal-footer">
-
-          <button type="button" class="btn btn-primary" id="btnFinalizar">Finalizar</button>
-          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+        <div class="modal-footer d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Total:</strong>
+            <span id="totalGestionFooter" style="font-size:1.2em;">0</span>
+          </div>
+          <div>
+            <button type="button" class="btn btn-success" id="btnAprobar">Aprobar</button>
+            <button type="button" class="btn btn-warning d-none" id="btnModificar">Modificar</button>
+            <button type="button" class="btn btn-danger" id="btnAnular">Anular</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+          </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -170,7 +183,7 @@ Orden de Produccion
                 <tr>
                   <th>Prenda</th>
                   <th>color</th>
-                  <th>Consulta Disponibilidad</th> <!-- boton al modal de veificacion -->
+                  <th>Consulta Disponibilidad</th> <!-- boton al modal de verificación -->
                 </tr>
               </thead>
               <tbody></tbody>
@@ -212,14 +225,13 @@ Orden de Produccion
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-primary" id="btnAsignarp">Asignar</button>
-          <!-- boton asigna y carga la prenda seleccionada al formulario si hay suficientes materiales -->
           <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!--modal para agrera mp extra  -->
+  <!--modal para agregar mp extra  -->
   <div class="modal" id="modalFormulariomp">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -303,52 +315,45 @@ Orden de Produccion
 
 {% block js %}
 <script>
+  const estadosGlosario = {
+    'P': 'Pendiente',
+    'A': 'Aprobado',
+    'I': 'Iniciado',
+    'F': 'Finalizado',
+    'R': 'Rechazado'
+  };
 
-  function formatearFecha(fechaStr) {
-    if (!fechaStr) return '';
-    const fecha = new Date(fechaStr);
-    if (isNaN(fecha)) return fechaStr;
-    const dia = String(fecha.getDate()).padStart(2, '0');
-    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-    const anio = fecha.getFullYear();
-    const hora = String(fecha.getHours()).padStart(2, '0');
-    const min = String(fecha.getMinutes()).padStart(2, '0');
-    const seg = String(fecha.getSeconds()).padStart(2, '0');
-    return `${dia}/${mes}/${anio}`;
-  }
+  const getId = (row) => row.idpresupuesto ?? row.id ?? row.presupuesto_id ?? row.idorden_produccion;
+  const getClienteNombre = (row) => {
+    if ((row.per_nombre || row.per_apellido)) return `${row.per_nombre ?? ''} ${row.per_apellido ?? ''}`.trim();
+    if (row.cliente_nombre) return row.cliente_nombre;
+    if (row.cliente) return row.cliente;
+    return '';
+  };
+  const getClienteCI = (row) => row.per_ci ?? row.ci ?? row.cliente_ci ?? '';
 
   const initDatatable = () => {
     $('#tbl').DataTable({
       language: {
         url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
       },
-      ajax: '/api/v1/producciones',
+      ajax: '/api/v1/presupuestos',
       columns: [
-        { data: 'idorden_produccion' },
-        {
-          data: 'per_nombre',
-          render: function (data, type, row) {
-            return row.per_nombre + ' ' + row.per_apellido;
-          }
-        },
-        { data: 'per_ci' },
-        { data: 'eta_nombre' },
-        {
-          data: 'fecha',
-          render: function (data) {
-            return formatearFecha(data);
-          }
-        },
+        { data: function (row) { return row.idpresupuesto; } },
+        { data: function (row) { return getClienteNombre(row); } },
+        { data: function (row) { return getClienteCI(row); } },
+        { data: function (row) { return estadosGlosario[row.estado] || row.estado || ''; } },
+        { data: function (row) { return formatearFecha(row.fecha); } },
+        { data: function (row) { return formatearFecha(row.fecha_solicitud); } },
+        { data: function (row) { return formatearFecha(row.fecha_estado); } },
+        { data: function (row) { return row.total ?? ''; } },
         {
           data: function (row) {
-            const estadosHabilitados = ["PENDIENTE PRODUCCION", "MEJORABLE"];
-            const isEnabled = estadosHabilitados.includes(row.eta_nombre);
-
-            return `<button type="button" name="btn_editar" class="btn btn-primary" 
-                data-idorden="${row.idorden_produccion}" 
-                ${isEnabled ? "" : "disabled"}>
-                Gestionar
-            </button>`;
+            const estado = (row.estado ?? '').toUpperCase();
+            const estadosHabilitados = ["P", "MEJORABLE", "PENDIENTE"];
+            const isEnabled = estadosHabilitados.includes(estado);
+            const id = row.idpresupuesto;
+            return `<button type="button" name="btn_editar" class="btn btn-primary" data-idpresupuesto="${id}" ${isEnabled ? "" : "disabled"}>Gestionar</button>`;
           }
         }
       ]
@@ -381,11 +386,10 @@ Orden de Produccion
       const ci = $(this).data('pci');
       $('#txtCliente').val(nombre + ' ' + apellido + ' ' + ci);
       $('#txtIdCliente').val(idCliente);
-      //Cerrar el modal
       $('#modalFormulariob').modal('hide');
     });
-
   }
+
   const initDatatablec = () => {
     $('#tblc').DataTable({
       language: {
@@ -405,49 +409,32 @@ Orden de Produccion
       ]
     });
     $('#tblc').on('click', 'button[name="btn_asignar"]', function () {
-      //alert('Asignar');
       const idcosto = $(this).data('id');
       const nombre = $(this).data('pnombre');
       const color = $(this).data('pcolor');
 
-      // Asignar valores a los campos de entrada
       $('#txtnprenda').val(nombre + ' ' + color);
       $('#txtIdconsulta').val(idcosto);
 
-      // Validar que idcosto es válido
       if (idcosto > 0) {
-        fetch(`/api/v1/costos/${idcosto}/detalles`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
+        fetch(`/api/v1/costos/${idcosto}/detalles`, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
           .then(resp => {
-            if (!resp.ok) {
-              throw new Error(`Error en la solicitud: ${resp.statusText}`);
-            }
+            if (!resp.ok) throw new Error(`Error en la solicitud: ${resp.statusText}`);
             return resp.json();
           })
           .then(detallesData => {
-            const detalles = detallesData.data;
+            const detalles = detallesData.data || [];
             const table = $("#tblm tbody");
-            table.empty(); // Limpiar tabla antes de agregar nuevas filas
-
+            table.empty();
             detalles.forEach(detalle => {
               const { mp_nombre, unidad, cantidad, stock } = detalle;
-
               const newRow = $("<tr>");
               $("<td>").text(mp_nombre).appendTo(newRow);
               $("<td>").text(unidad).appendTo(newRow);
               $("<td>").text(cantidad).appendTo(newRow);
               $("<td>").text(stock).appendTo(newRow);
-              if (cantidad > stock) {
-                $('#cantidad').val(0);
-              }
               table.append(newRow);
             });
-
-            // Mostrar el modal después de cargar los datos
             $('#modal4Title').text("Disponibilidad de Materias Primas");
             $('#modalFormulariod').modal('show');
           })
@@ -459,8 +446,8 @@ Orden de Produccion
         alert("ID de costo no válido.");
       }
     });
-
   }
+
   const asignarprenda = () => {
     $('#btnAsignarp').on('click', function () {
       const a = $('#disponible').val();
@@ -473,16 +460,13 @@ Orden de Produccion
         $('#modalFormularioc').modal('hide');
       } else {
         Swal.fire("Error", "No hay disponibilidad de materias primas en la prenda seleccionada.", "error");
-        return false;
       }
     });
   }
 
   const initDatatablem = () => {
     $('#tblmpe').DataTable({
-      language: {
-        url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}",
-      },
+      language: { url: "{{ url_for('static', filename='vendor/datatables/es-ES.json') }}" },
       ajax: '/api/v1/materia_primas',
       columns: [
         { data: 'mat_nombre' },
@@ -505,117 +489,96 @@ Orden de Produccion
       $('#txtmateria_prima').val(materia_prima);
       $('#txtIdMateria_prima').val(idMateria_prima);
       $('#txtstockmp').val(stock);
-      //Cerrar el modal
       $('#modalFormulariompe').modal('hide');
     });
-
   }
+
   const cargarDetallempe = () => {
     $("#cargarmpe").on('click', function () {
-      //alert('car');
       const IdMateria_prima = $("#txtIdMateria_prima").val();
       const materia_prima = $("#txtmateria_prima").val();
       const stock = parseInt($("#txtstockmp").val());
-      const cantidad = $("#txtCantidad").val();
-      if (cantidad > 0 && cantidad < stock) {
-        // nueva fila
+      const cantidad = parseInt($("#txtCantidad").val(), 10) || 0;
+      if (cantidad > 0 && cantidad <= stock) {
         const table = $("#detallesmpe tbody");
         const newRow = $("<tr>");
-
         $("<td>").text(materia_prima).appendTo(newRow);
         $("<td>").text(cantidad).appendTo(newRow);
         $("<td>").html('<button class="btn btn-link btn-delete"><i class="fa fa-trash"></i></button>').appendTo(newRow);
         $("<td>").html('<input type="hidden" id="idmp" value="' + IdMateria_prima + '">').appendTo(newRow);
         table.append(newRow);
-
-        // limpiar inputs
         $("#txtmateria_prima").val('');
         $("#txtCantidad").val('');
         $("#txtstockmp").val('');
         $("#txtIdMateria_prima").val('');
-
-        newRow.find(".fa-trash").click(function () {
-          const row = $(this).closest("tr");
-          row.remove();
-        });
-
+        newRow.find(".fa-trash").click(function () { $(this).closest("tr").remove(); });
       } else {
-        alert("La cantidad debe ser mayor a 0 y menor al stock de la materia prima.");
+        alert("La cantidad debe ser mayor a 0 y menor o igual al stock de la materia prima.");
       }
     });
   }
+
   const guardarmpe = () => {
     $('#btnGuardarmp').on('click', function () {
+      const detalles = [];
       $("#detallesmpe tbody tr").each(function () {
         const idmp = $(this).find("input[type='hidden']").val();
         const cantidad = $(this).find("td").eq(1).text();
-        let detalles = [];
-
         if (idmp) {
-          detalles.push({
-            idmateria_prima: idmp,
-            dco_cantidad: cantidad
-          });
+          detalles.push({ idmateria_prima: idmp, dco_cantidad: cantidad });
         }
-        const dataa = {
-          detalles: detalles,
-        };
-        fetch(`/api/v1/produccionesmp`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(dataa)
-        })
       });
-      $('#modalFormulariomp').modal('hide');
-      finalizar();
+      if (detalles.length === 0) {
+        Swal.fire("Error", "No hay materias primas para guardar.", "error");
+        return;
+      }
+      const dataa = { detalles: detalles };
+      fetch(`/api/v1/presupuestosmp`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataa) })
+        .then(() => {
+          $('#modalFormulariomp').modal('hide');
+          finalizar();
+        }).catch(err => {
+          console.error(err);
+          Swal.fire("Error", "Ocurrió un error al actualizar.", "error");
+        });
     });
   }
+
   const buacarmat = () => {
     $('#txtmateria_prima').on('click', function () {
-      // Setear un título a modal
       $('#modalTitlempe').text("Selecciona una Materia Prima");
-      // inicia ventana modal
       $('#modalFormulariompe').modal();
     });
   }
+
   const finalizar = () => {
     const tabla = $('#tbl').DataTable();
-    const dataa = $('#txtidproducciong').val();
+    const idpresupuesto = $('#txtidpresupuestog').val();
     const accion = 'procesar';
-    //alert('finalizar');
-    fetch(`/api/v1/produccionesfin`, {
+    fetch(`/api/v1/presupuestosfin`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        idproduccion: dataa,
-        accion: accion
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idpresupuesto: idpresupuesto, accion: accion }),
     })
       .then(resp => resp.json())
       .then(data => {
         if (data.success) {
           $('#modalFormulariog').modal("hide");
           tabla.ajax.reload();
-          Swal.fire("Actualizado", "La orden ha sido actualizada correctamente.", "success");
+          Swal.fire("Actualizado", "El presupuesto ha sido actualizado correctamente.", "success");
         } else {
           Swal.fire(data.error || "Error desconocido");
         }
       }).catch(err => {
         console.error(err);
-        Swal.fire("Error", "Ocurrió un error al actualizar el costo.", "error");
+        Swal.fire("Error", "Ocurrió un error al actualizar.", "error");
       });
   }
 
   const agregar = () => {
     $('#btnAgregar').on('click', function () {
-      // Setear un título a modal
-      $('#modalTitle').text("Agregar un Costo");
-      // inicia ventana modal
-      $('#txtidproduccion').val("");
+      $('#modalTitle').text("Agregar un Presupuesto");
+      $('#txtidpresupuesto').val("");
       $('#txtDescripcion').val("");
       $('#modalFormulario').modal();
     });
@@ -623,77 +586,87 @@ Orden de Produccion
 
   const buacarcliente = () => {
     $('#txtCliente').on('click', function () {
-      // Setear un título a modal
       $('#modal2Title').text("Selecciona un Cliente");
-      // inicia ventana modal
       $('#modalFormulariob').modal();
     });
   }
   const buacarcosto = () => {
     $('#txtcosto').on('click', function () {
-      // Setear un título a modal
       $('#modal3Title').text("Selecciona una Prenda");
-      // inicia ventana modal
       $('#modalFormularioc').modal();
     });
   }
 
-
   const cargarDetalle = () => {
     $("#cargarmp").on('click', function () {
-
       const Idcosto = $("#txtIdcosto").val();
       const costo = $("#txtcosto").val();
       if (Idcosto > 0) {
-        // nueva fila
-        const table = $("#detalles tbody");
-        const newRow = $("<tr>");
+        // Obtener el costo del producto desde la API
+        fetch(`/api/v1/costos/${Idcosto}`, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+          .then(resp => resp.json())
+          .then(data => {
+            // Suponiendo que el endpoint devuelve { success: true, data: { total: ... } }
+            const totalProducto = data.data?.cos_total ?? 0;
 
-        $("<td>").text(costo).appendTo(newRow);
-        $("<td>").html('<button class="btn btn-link btn-delete"><i class="fa fa-trash"></i></button>').appendTo(newRow);
-        $("<td>").html('<input type="hidden" id="idmp" value="' + Idcosto + '">').appendTo(newRow);
-        table.append(newRow);
+            // nueva fila
+            const table = $("#detalles tbody");
+            const newRow = $("<tr>");
+            $("<td>").text(costo).appendTo(newRow);
+            $("<td>").text(totalProducto).addClass("costoProducto").appendTo(newRow);
+            $("<td>").html('<button class="btn btn-link btn-delete"><i class="fa fa-trash"></i></button>').appendTo(newRow);
+            $("<td>").html('<input type="hidden" id="idmp" value="' + Idcosto + '">').appendTo(newRow);
+            table.append(newRow);
 
-        // limpiar inputs
-        $("#txtIdcosto").val('');
-        $("#txtcosto").val('');
+            // limpiar inputs
+            $("#txtIdcosto").val('');
+            $("#txtcosto").val('');
 
-        newRow.find(".fa-trash").click(function () {
-          const row = $(this).closest("tr");
-          row.remove();
-        });
+            newRow.find(".fa-trash").click(function () {
+              const row = $(this).closest("tr");
+              row.remove();
+              actualizarTotalGeneral();
+            });
 
+            actualizarTotalGeneral();
+          });
       }
     });
   }
 
+  // Función para sumar el total general
+  function actualizarTotalGeneral() {
+    let total = 0;
+    $("#detalles tbody tr").each(function () {
+      const costo = parseFloat($(this).find(".costoProducto").text()) || 0;
+      total += costo;
+    });
+    $("#totalGeneral").text(total.toFixed(2));
+    $("#totalGeneralFooter").text(total.toFixed(2));
+  }
+
   const guardar = () => {
     $('#btnGuardar').on('click', function () {
-      const idProduccion = $('#txtidproduccion').val();
+      const idPresupuesto = $('#txtidpresupuesto').val();
       const idCliente = $('#txtIdCliente').val();
       const tabla = $('#tbl').DataTable();
       const detalles = [];
 
       $("#detalles tbody tr").each(function () {
         const idcosto = $(this).find("input[type='hidden']").val();
-
         if (idcosto) {
-          detalles.push({
-            idcosto: idcosto,
-          });
+          detalles.push({ idcosto: idcosto });
         }
       });
-      console.log("Detalles:");
-      console.log(JSON.stringify(detalles, null, 2));
-
+      const totalGeneral = parseFloat($("#totalGeneralFooter").text()) || 0;
       const dataa = {
         cliente_id: idCliente,
-        detalles: detalles
+        detalles: detalles,
+        total: totalGeneral
       };
 
       if (detalles.length > 0) {
-        // insert
-        fetch(`/api/v1/producciones`, {
+        fetch(`/api/v1/presupuestos`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -704,164 +677,217 @@ Orden de Produccion
           .then(data => {
             if (data && !data.error && data.success) {
               tabla.ajax.reload();
-              Swal.fire("Agregado", "La orden ha sido Creada correctamente.", "success");
+              Swal.fire("Agregado", "El presupuesto ha sido creado correctamente.", "success");
+              $('#modalFormulario').modal("hide");
             } else {
               Swal.fire(data.error || "Error desconocido");
             }
           }).catch(err => {
             console.error(err);
-            Swal.fire("Error", "Ocurrió un error al guardar el costo.", "error");
+            Swal.fire("Error", "Ocurrió un error al guardar el presupuesto.", "error");
           });
-        $('#modalFormulario').modal("hide");
+      } else {
+        Swal.fire("Error", "Debe agregar al menos una prenda.", "error");
       }
-      Swal.fire("Error", "Datos incompletos", "error");
-
     });
   }
   const enviarArevision = () => {
     $('#btnFinalizar').on('click', function () {
-      Swal.fire({
-        title: "¿Se utilizo Materia prima extra?",
-        showCancelButton: true,
-        confirmButtonText: "Si",
-        cancelButtonText: `No`
-      }).then((result) => {
-        if (result.isConfirmed) {
-          //alert("si");
-          $('#modalTitlemp').text("Agrege las materias primas extras utilizadas");
-          $('#modalFormulariomp').modal();
-        } else {
-          //alert("no");
-          finalizar();
-        }
-      });
+      Swal.fire({ title: "¿Se utilizó Materia prima extra?", showCancelButton: true, confirmButtonText: "Si", cancelButtonText: `No` })
+        .then((result) => {
+          if (result.isConfirmed) {
+            $('#modalTitlemp').text("Agrega las materias primas extras utilizadas");
+            $('#modalFormulariomp').modal();
+          } else {
+            finalizar();
+          }
+        });
     });
   }
   const editar = () => {
     $('#tbl').on('click', 'button[name="btn_editar"]', function () {
-      // Mostrar mensaje de confirmación usando sweetalert
-      Swal.fire({
-        title: "¿Deseas Gestionar esta orden?",
-        showCancelButton: true,
-        confirmButtonText: "Si",
-        cancelButtonText: `No`
-      }).then((result) => {
-        if (result.isConfirmed) {
-          //Swal.fire("Saved!", "", "success");
-          $('#modalTitleg').text("Gestionar orden de produccion");
+      Swal.fire({ title: "¿Deseas Gestionar este presupuesto?", showCancelButton: true, confirmButtonText: "Si", cancelButtonText: `No` })
+        .then((result) => {
+          if (result.isConfirmed) {
+            $('#modalTitleg').text("Gestionar presupuesto");
+            const idPres = $(this).data('idpresupuesto') ?? $(this).data('idorden');
+            $('#txtidpresupuestog').val(idPres);
 
-          const idOrden = $(this).data('idorden');
-          $('#txtidproducciong').val(idOrden);
-          //alert($(this).data('idorden'));
-          // Necesitamos obtener la descripción del backend
-          fetch(`/api/v1/producciones/${idOrden}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          })
-            .then(resp => {
-              if (!resp.ok) {
-                throw new Error(`Error en la solicitud: ${resp.statusText}`);
-              }
-              return resp.json();
-            })
-            .then(data => {
-              $('#txtIdClienteg').val(data.data.idcliente);
-              $('#txtClienteg').val(data.data.per_nombre);
-              $('#modalFormulariog').modal();
-              return fetch(`/api/v1/producciones/${idOrden}/detalles`, {
-                method: 'GET',
-                headers: {
-                  'Content-Type': 'application/json'
-                }
+            fetch(`/api/v1/presupuestos/${idPres}`, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+              .then(resp => resp.json())
+              .then(data => {
+                const d = data.data || {};
+                $('#txtIdClienteg').val(d.cliente_id ?? d.idcliente ?? d.cliente ?? '');
+                $('#txtClienteg').val(getClienteNombre(d));
+                $('#modalFormulariog').modal();
+                // Muestra los nuevos campos en el modal si lo deseas:
+
+                return fetch(`/api/v1/presupuestos/${idPres}/detalles`, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+              })
+              .then(resp => { if (!resp.ok) throw new Error(resp.statusText); return resp.json(); })
+              .then(detallesData => {
+                const detalles = detallesData.data || [];
+                const table = $("#detallesg tbody");
+                table.empty();
+                detalles.forEach(detalle => {
+                  const { idcosto, pro_nombre, cos_prenda } = detalle;
+                  console.log(detalle);
+                  const newRow = $("<tr>");
+                  $("<td>").text(pro_nombre ?? '').appendTo(newRow);
+                  $("<td>").text(cos_prenda ?? '').addClass("costoProductoG").appendTo(newRow);
+                  $("<td>").html('<button class="btn btn-link btn-delete-detalle"><i class="fa fa-trash"></i></button><input type="hidden" class="idcostoDetalle" value="' + idcosto + '">').appendTo(newRow);
+                  table.append(newRow);
+                });
+                actualizarTotalGestion();
+                $('#modalFormulariog').modal();
+              })
+              .catch(error => {
+                console.error("Error al obtener los datos:", error);
+                Swal.fire("Error", "No se pudo cargar el presupuesto. Intente nuevamente.", "error");
               });
-            })
-            .then(resp => {
-              if (!resp.ok) {
-                throw new Error(`Error en la solicitud: ${resp.statusText}`);
-              }
-              return resp.json();
-            })
-            .then(detallesData => {
-              const detalles = detallesData.data;
-              const table = $("#detallesg tbody");
-              table.empty(); // Limpiar tabla
-
-              detalles.forEach(detalle => {
-                const { idcosto, pro_nombre, pro_color } = detalle;
-
-                const newRow = $("<tr>");
-                $("<td>").text(pro_nombre).appendTo(newRow);
-                $("<td>").text(pro_color).appendTo(newRow);
-
-                table.append(newRow);
-              });
-
-              // Actualizar total general en el formulario
-
-              // Mostrar modal
-              //$('#modalFormulario').modal();
-            })
-            .catch(error => {
-              console.error("Error al obtener los datos:", error);
-              Swal.fire("Error", "No se pudo cargar el costo. Intente nuevamente.", "error");
-            });
-        }
-      });
+          }
+        });
     });
   }
 
   const eliminar = () => {
     $('#tbl').on('click', 'button[name="btn_eliminar"]', function () {
       const idCosto = $(this).data('idcosto');
-      // Mostrar mensaje de confirmación usando sweetalert
-      Swal.fire({
-        title: "¿Deseas eliminar este registro?",
-        showCancelButton: true,
-        confirmButtonText: "Si",
-        cancelButtonText: `No`
-      }).then((result) => {
-        if (result.isConfirmed) {
-          fetch(`/api/v1/costos/${idCosto}`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          })
-            .then(resp => resp.json())
-            .then(data => {
-              if (data && !data.error && data.success) {
-                // Para borrar la fila del datatable(cliente)
-                const fila = $(this).closest('tr');
-                const tabla = $('#tbl').DataTable();
-                tabla.row(fila).remove().draw();
-                Swal.fire("Eliminado", "", data.success);
-              } else {
-                Swal.fire(data.error);
-              }
-            }).catch(err => {
-              Swal.fire("Error", "Ocurrió un error al eliminar el costo.", "error");
-            });
-        }
-      });
-
+      Swal.fire({ title: "¿Deseas eliminar este registro?", showCancelButton: true, confirmButtonText: "Si", cancelButtonText: `No` })
+        .then((result) => {
+          if (result.isConfirmed) {
+            fetch(`/api/v1/costos/${idCosto}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
+              .then(resp => resp.json())
+              .then(data => {
+                if (data && data.success) {
+                  const fila = $(this).closest('tr');
+                  const tabla = $('#tbl').DataTable();
+                  tabla.row(fila).remove().draw();
+                  Swal.fire("Eliminado", "", "success");
+                } else {
+                  Swal.fire(data.error || "Error al eliminar");
+                }
+              }).catch(err => {
+                Swal.fire("Error", "Ocurrió un error al eliminar.", "error");
+              });
+          }
+        });
     });
   }
 
+  const formatearFecha = (fechaStr) => {
+    if (!fechaStr) return '';
+    const fecha = new Date(fechaStr);
+    if (isNaN(fecha)) return fechaStr; // Si no es una fecha válida, muestra el original
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    const hora = String(fecha.getHours()).padStart(2, '0');
+    const min = String(fecha.getMinutes()).padStart(2, '0');
+    const seg = String(fecha.getSeconds()).padStart(2, '0');
+    return `${dia}/${mes}/${anio} ${hora}:${min}:${seg}`;
+  }
+
+  // Agregar prenda en el modal de gestión
+  $('#btnAgregarDetalleG').on('click', function () {
+    $('#modal3Title').text("Selecciona una Prenda");
+    $('#modalFormularioc').modal();
+
+    $('#tblc').off('click', 'button[name="btn_asignar"]').on('click', 'button[name="btn_asignar"]', function () {
+      const idcosto = $(this).data('id');
+      const nombre = $(this).data('pnombre');
+      fetch(`/api/v1/costos/${idcosto}`, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+        .then(resp => resp.json())
+        .then(data => {
+          const totalProducto = data.data?.cos_total ?? 0;
+          const table = $("#detallesg tbody");
+          const newRow = $("<tr>");
+          $("<td>").text(nombre ?? '').appendTo(newRow);
+          $("<td>").text(totalProducto).addClass("costoProductoG").appendTo(newRow);
+          $("<td>").html('<button class="btn btn-link btn-delete-detalle"><i class="fa fa-trash"></i></button><input type="hidden" class="idcostoDetalle" value="' + idcosto + '">').appendTo(newRow);
+          table.append(newRow);
+          actualizarTotalGestion();
+          $('#modalFormularioc').modal('hide');
+        });
+    });
+  });
+
+  $('#btnAprobar').on('click', function () {
+    const idPresupuesto = $('#txtidpresupuestog').val();
+    fetch(`/api/v1/presupuestos/${idPresupuesto}/aprobar`, { method: 'POST' })
+      .then(resp => resp.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire("Aprobado", "El presupuesto fue aprobado y enviado a producción.", "success");
+          $('#modalFormulariog').modal('hide');
+          $('#tbl').DataTable().ajax.reload();
+        } else {
+          Swal.fire("Error", data.error || "No se pudo aprobar.");
+        }
+      });
+  });
+
+  $('#btnModificar').on('click', function () {
+    const idPresupuesto = $('#txtidpresupuestog').val();
+    const detalles = [];
+    $("#detallesg tbody tr").each(function () {
+      const idcosto = $(this).find(".idcostoDetalle").val();
+      if (idcosto) detalles.push({ idcosto: idcosto });
+    });
+    const totalGeneral = parseFloat($("#totalGestionFooter").text()) || 0;
+    fetch(`/api/v1/presupuestos/${idPresupuesto}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ detalles: detalles, total: totalGeneral })
+    })
+      .then(resp => resp.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire("Modificado", "El presupuesto fue modificado.", "success");
+          $('#modalFormulariog').modal('hide');
+          $('#tbl').DataTable().ajax.reload();
+        } else {
+          Swal.fire("Error", data.error || "No se pudo modificar.");
+        }
+      });
+  });
+
+  $('#btnAnular').on('click', function () {
+    const idPresupuesto = $('#txtidpresupuestog').val();
+    fetch(`/api/v1/presupuestos/${idPresupuesto}/anular`, { method: 'POST' })
+      .then(resp => resp.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire("Anulado", "El presupuesto fue anulado.", "success");
+          $('#modalFormulariog').modal('hide');
+          $('#tbl').DataTable().ajax.reload();
+        } else {
+          Swal.fire("Error", data.error || "No se pudo anular.");
+        }
+      });
+  });
+
+  // Eliminar prenda en el modal de gestión
+  $(document).on('click', '#detallesg .btn-delete-detalle', function () {
+    $(this).closest("tr").remove();
+    actualizarTotalGestion();
+  });
+
+  // Actualizar total en el modal de gestión
+  function actualizarTotalGestion() {
+    let total = 0;
+    $("#detallesg tbody tr").each(function () {
+      const costo = parseFloat($(this).find(".costoProductoG").text()) || 0;
+      total += costo;
+    });
+    $("#totalGestionFooter").text(total.toFixed(2));
+  }
+
   const addEvents = () => {
-    agregar();
-    guardar();
-    editar();
-    eliminar();
-    buacarcliente();
-    buacarcosto();
-    cargarDetalle();
-    asignarprenda();
-    enviarArevision();
-    cargarDetallempe();
-    buacarmat();
-    guardarmpe();
+    agregar(); guardar(); editar(); eliminar();
+    buacarcliente(); buacarcosto(); cargarDetalle();
+    asignarprenda(); enviarArevision();
+    cargarDetallempe(); buacarmat(); guardarmpe();
   }
 
   $(function () {
@@ -871,5 +897,7 @@ Orden de Produccion
     initDatatablec();
     addEvents();
   });
+
+
 </script>
 {% endblock %}

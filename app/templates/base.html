@@ -14,7 +14,8 @@
     <title>{% block titulo %}{% endblock %}</title>
 
     <!-- CSS de iconos y fuentes-->
-    <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
+    <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet"
+        type="text/css">
     <link
         href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
         rel="stylesheet">
@@ -24,10 +25,22 @@
 
     <!-- CSS de Datatables -->
     <link href="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+    <style>
+        body.fondo-dashboard {
+            background: url("/static/img/dsh.png") no-repeat center center fixed !important;
+            background-size: cover !important;
+        }
 
+        body.fondo-dashboard .container-fluid,
+        body.fondo-dashboard .card {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+    </style>
 </head>
 
-<body id="page-top">
+<body id="page-top" {% block extra_body_class %}{% endblock %}>
 
     <!-- Page Wrapper -->
     <div id="wrapper">
@@ -38,7 +51,7 @@
             <!-- Sidebar - Brand -->
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/">
                 <div class="sidebar-brand-icon rotate-n-15">
-                    <i class="fas fa-laugh-wink"></i>
+                    <i class="fas fa-angle-up"></i>
                 </div>
                 <div class="sidebar-brand-text mx-3">YVOTY<sup>sistem</sup></div>
             </a>
@@ -78,12 +91,14 @@
                         <a class="collapse-item" href="{{ url_for('deposito.depositoIndex') }}">Deposito</a>
                         <a class="collapse-item" href="{{ url_for('rol.rolIndex') }}">Rol</a>
                         <a class="collapse-item" href="{{ url_for('trabajo.trabajoIndex') }}">Trabajo</a>
-                        <a class="collapse-item" href="{{ url_for('etapa_produccion.etapa_produccionIndex') }}">Etapas de produccion</a>
+                        <a class="collapse-item" href="{{ url_for('etapa_produccion.etapa_produccionIndex') }}">Etapas
+                            de produccion</a>
                         <a class="collapse-item" href="{{ url_for('persona.personaIndex') }}">Persona</a>
                         <a class="collapse-item" href="{{ url_for('usuario.usuarioIndex') }}">Usuario</a>
                         <a class="collapse-item" href="{{ url_for('funcionario.funcionarioIndex') }}">Funcionario</a>
                         <a class="collapse-item" href="{{ url_for('cliente.clienteIndex') }}">Cliente</a>
-                        <a class="collapse-item" href="{{ url_for('materia_prima.materia_primaIndex') }}">Materia prima</a>
+                        <a class="collapse-item" href="{{ url_for('materia_prima.materia_primaIndex') }}">Materia
+                            prima</a>
                         <a class="collapse-item" href="{{ url_for('producto.productoIndex') }}">Producto</a>
                     </div>
                 </div>
@@ -94,14 +109,17 @@
                 <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities"
                     aria-expanded="true" aria-controls="collapseUtilities">
                     <i class="fas fa-fw fa-wrench"></i>
-                    <span class="text-wrap">Gestionar Procesos  </span>
+                    <span class="text-wrap">Gestionar Procesos </span>
                 </a>
                 <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities"
                     data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item" href="{{ url_for('costo.costoIndex') }}">Costos</a>
-                        <a class="collapse-item" href="{{ url_for('produccion.produccionIndex') }}">Orden de produccion</a>
-                        <a class="collapse-item" href="{{ url_for('control_de_calidad.controlIndex') }}">Control de Calidad</a>
+                        <a class="collapse-item" href="{{ url_for('presupuesto.presupuestoIndex') }}">Presupuesto</a>
+                        <a class="collapse-item" href="{{ url_for('produccion.produccionIndex') }}">Orden de
+                            produccion</a>
+                        <a class="collapse-item" href="{{ url_for('control_de_calidad.controlIndex') }}">Control de
+                            Calidad</a>
                     </div>
                 </div>
             </li>
@@ -174,10 +192,10 @@
                         </li>
 
                         <!-- Nav Item - Alerts -->
-                        
+
 
                         <!-- Nav Item - Messages -->
-                        
+
 
                         <div class="topbar-divider d-none d-sm-block"></div>
 
@@ -185,7 +203,8 @@
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ session['usu_nombre'] }}</span>
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ session['usu_nombre']
+                                    }}</span>
                                 <input type="hidden" id="idusuario" value="{{ session['idusuario'] }}">
                                 <img class="img-profile rounded-circle"
                                     src="{{ url_for('static', filename='img/undraw_profile.svg') }}">
@@ -193,7 +212,7 @@
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
-                                
+
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -268,20 +287,20 @@
     <!-- Custom scripts for all pages-->
     <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
 
-     <!-- Librerias para usar Datatables -->
-     <script src="{{ url_for('static', filename='vendor/datatables/jquery.dataTables.min.js') }}"></script>
-     <script src="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
+    <!-- Librerias para usar Datatables -->
+    <script src="{{ url_for('static', filename='vendor/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
 
-     <!-- Libreria para mensajes emergentes -->
-     <script src="{{ url_for('static', filename='vendor/sweetalert/sweetalert2@11.js') }}"></script>
-     <script>
-         $(document).ready(function() {
+    <!-- Libreria para mensajes emergentes -->
+    <script src="{{ url_for('static', filename='vendor/sweetalert/sweetalert2@11.js') }}"></script>
+    <script>
+        $(document).ready(function () {
             const usu = $('#idusuario').val();
             if (usu < 1) {
                 window.location.href = "/login";
             }
-         });
-     </script>
+        });
+    </script>
 
     {# Este bloque pertenece a nuestros scripts de js #}
     {% block js %}
